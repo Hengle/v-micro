@@ -1,4 +1,3 @@
-// The code is from https://github.com/micro/go-micro
 package memory
 
 import (

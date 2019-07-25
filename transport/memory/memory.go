@@ -1,5 +1,4 @@
 // Package memory is an in-memory transport
-// The code is from https://github.com/micro/go-micro
 package memory
 
 import (
