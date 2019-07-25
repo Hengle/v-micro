@@ -1,0 +1,4 @@
+github.com/fananchong/gotcp v0.0.0-20190724100358-f79e8f47a012 h1:5/cJ0tEmeMyUbZsCSQ+vq+O5F8u24fLHjvODRpBCDxA=
+github.com/fananchong/gotcp v0.0.0-20190724100358-f79e8f47a012/go.mod h1:NwqSPUhE3lftRXXTbIYO3aSdkdQSs2gCGIZA4Mi1B6c=
+github.com/gogo/protobuf v1.2.0 h1:xU6/SpYbvkNYiptHJYEDRseDLvYE7wSqhYYNy0QSUzI=
+github.com/gogo/protobuf v1.2.0/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
