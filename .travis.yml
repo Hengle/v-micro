@@ -1,0 +1,19 @@
+language: go
+
+go:
+  - 1.12.x
+
+notifications:
+  email: false
+
+env:
+  - GO111MODULE=on GOPROXY=https://goproxy.io
+
+script:
+  - ./make.sh lint
+  - ./make.sh race
+  - ./make.sh coverage
+  - ./make.sh build
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

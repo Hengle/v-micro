@@ -30,7 +30,7 @@ function coverage_test(){
 case $cmd in
     lint) $0 dep && $GOBIN/golint -set_exit_status $(go list $SRC_DIR/...) ;;
     test) go test -short $(go list $SRC_DIR/...) ;;
-    race) go test -race -short $(go list $SRC_DIR/...) ;;
+    race) go test -race $(go list $SRC_DIR/...) -coverprofile=coverage.txt -covermode=atomic ;;
     coverage) coverage_test ;;
     coverhtml) coverage_test html ;;
     dep) go get -v golang.org/x/lint@$LINT_VER && cd $GOPATH/pkg/mod/golang.org/x/lint@$LINT_VER/ && go install ./... && cd $CUR_DIR ;;
