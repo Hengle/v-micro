@@ -10,7 +10,7 @@ func TestGotcpTransport(t *testing.T) {
 	tr := NewTransport()
 
 	// bind / listen
-	l, err := tr.Listen("localhost:8080")
+	l, err := tr.Listen("localhost:18080")
 	if err != nil {
 		t.Fatalf("Unexpected error listening %v", err)
 	}
@@ -38,7 +38,7 @@ func TestGotcpTransport(t *testing.T) {
 	}()
 
 	// dial
-	c, err := tr.Dial("localhost:8080")
+	c, err := tr.Dial("localhost:18080")
 	if err != nil {
 		t.Fatalf("Unexpected error dialing %v", err)
 	}
@@ -78,13 +78,13 @@ func TestListener(t *testing.T) {
 	defer l2.Close()
 
 	// now make sure it still fails
-	l3, err := tr.Listen(":8080")
+	l3, err := tr.Listen(":18080")
 	if err != nil {
 		t.Fatalf("Unexpected error listening %v", err)
 	}
 	defer l3.Close()
 
-	if _, err := tr.Listen(":8080"); err == nil {
-		t.Fatal("Expected error binding to :8080 got nil")
+	if _, err := tr.Listen(":18080"); err == nil {
+		t.Fatal("Expected error binding to :18080 got nil")
 	}
 }
