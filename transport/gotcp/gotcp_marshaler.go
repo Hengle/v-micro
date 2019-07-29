@@ -67,7 +67,7 @@ func unmarshal(data []byte) (*transport.Message, error) {
 		msg.Header[k] = v
 	}
 	// body
-	msg.Body = data[offset:]
+	msg.Body = append(msg.Body, data[offset:]...) // data gotcp 层缓冲区，需要深拷贝
 	return msg, nil
 }
 
