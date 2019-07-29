@@ -2,6 +2,7 @@ package mdns
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/fananchong/v-micro/registry"
@@ -53,8 +54,7 @@ func (m *mdnsWatcher) Next() (*registry.Result, error) {
 
 			service.Nodes = append(service.Nodes, &registry.Node{
 				ID:       strings.TrimSuffix(e.Name, "."+service.Name+".local."),
-				Address:  e.AddrV4.String(),
-				Port:     e.Port,
+				Address:  fmt.Sprintf("%s:%d", e.AddrV4.String(), e.Port),
 				Metadata: txt.Metadata,
 			})
 

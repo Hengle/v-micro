@@ -3,7 +3,9 @@ package mdns
 
 import (
 	"context"
+	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -126,14 +128,22 @@ func (m *mdnsRegistry) Register(service *registry.Service, opts ...registry.Regi
 			continue
 		}
 
+		//
+		host, pt, err := net.SplitHostPort(node.Address)
+		if err != nil {
+			gerr = err
+			continue
+		}
+		port, _ := strconv.Atoi(pt)
+
 		// we got here, new node
 		s, err := mdns.NewMDNSService(
 			node.ID,
 			service.Name,
 			"",
 			"",
-			node.Port,
-			[]net.IP{net.ParseIP(node.Address)},
+			port,
+			[]net.IP{net.ParseIP(host)},
 			txt,
 		)
 		if err != nil {
@@ -236,8 +246,7 @@ func (m *mdnsRegistry) GetService(service string) ([]*registry.Service, error) {
 
 				s.Nodes = append(s.Nodes, &registry.Node{
 					ID:       strings.TrimSuffix(e.Name, "."+p.Service+"."+p.Domain+"."),
-					Address:  e.AddrV4.String(),
-					Port:     e.Port,
+					Address:  fmt.Sprintf("%s:%d", e.AddrV4.String(), e.Port),
 					Metadata: txt.Metadata,
 				})
 
