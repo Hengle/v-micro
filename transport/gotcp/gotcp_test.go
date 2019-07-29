@@ -1,6 +1,7 @@
 package gotcp
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/fananchong/v-micro/transport"
@@ -22,7 +23,10 @@ func TestGotcpTransport(t *testing.T) {
 			for {
 				var m transport.Message
 				if err := sock.Recv(&m); err != nil {
-					t.Logf("Exit accept coroutine")
+					// 竞态测试时，该协程可能会在测试结束后，执行到这里， t.Logf 会不高兴，panic
+					// 因此注释掉 t.Logf ，使用 fmt.Println
+					// t.Logf("Exit accept coroutine")
+					fmt.Println("Exit accept coroutine")
 					return
 				}
 				t.Logf("Server Received %s", string(m.Body))
