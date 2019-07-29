@@ -6,7 +6,7 @@ import (
 
 func TestEncoding(t *testing.T) {
 	testData := []*mdnsTxt{
-		&mdnsTxt{
+		{
 			Version: "1.0.0",
 			Metadata: map[string]string{
 				"foo": "bar",

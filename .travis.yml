@@ -17,3 +17,4 @@ script:
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+  - curl https://goreportcard.com/checks -X POST -d "repo=github.com/fananchong/v-micro"
