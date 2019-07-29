@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/fananchong/v-micro/registry"
-	"github.com/hashicorp/mdns"
+	"github.com/micro/mdns"
 	hash "github.com/mitchellh/hashstructure"
 )
 
