@@ -3,8 +3,8 @@ package log
 
 // Logger logger interface
 type Logger interface {
-	Log(v ...interface{})
-	Logf(format string, v ...interface{})
+	Info(v ...interface{})
+	Infof(format string, v ...interface{})
 	Error(v ...interface{})
 	Errorf(format string, v ...interface{})
 }
@@ -14,14 +14,14 @@ var (
 	logger Logger
 )
 
-// Log log
-func Log(v ...interface{}) {
-	logger.Log(v...)
+// Info info
+func Info(v ...interface{}) {
+	logger.Info(v...)
 }
 
-// Logf logf
-func Logf(format string, v ...interface{}) {
-	logger.Logf(format, v...)
+// Infof infof
+func Infof(format string, v ...interface{}) {
+	logger.Infof(format, v...)
 }
 
 // Error error

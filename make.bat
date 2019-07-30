@@ -13,6 +13,10 @@ if %CMD%=="build" (
 )^
 else if %CMD%=="race" (
     go test -race ./...
+)^
+else if %CMD%=="test" (
+    go test -v ./...
 )
+
 
 cd %CUR_DIR%
