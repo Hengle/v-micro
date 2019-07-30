@@ -3,7 +3,7 @@ module github.com/fananchong/v-micro
 go 1.12
 
 require (
-	github.com/fananchong/gotcp v0.0.0-20190725141440-0f65415bcce1
+	github.com/fananchong/gotcp v0.0.0-20190730172749-6c5cc5c9257e
 	github.com/lestrrat-go/file-rotatelogs v2.2.0+incompatible
 	github.com/lestrrat-go/strftime v0.0.0-20190725011945-5c849dd2c51d // indirect
 	github.com/micro/mdns v0.1.0

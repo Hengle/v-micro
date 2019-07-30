@@ -1,7 +1,7 @@
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/fananchong/gotcp v0.0.0-20190725141440-0f65415bcce1 h1:ZxctVmLT19P6YGWE0wH64VkgOcsSMsN5YRkqWRFw9VY=
-github.com/fananchong/gotcp v0.0.0-20190725141440-0f65415bcce1/go.mod h1:NwqSPUhE3lftRXXTbIYO3aSdkdQSs2gCGIZA4Mi1B6c=
+github.com/fananchong/gotcp v0.0.0-20190730172749-6c5cc5c9257e h1:syD7RSRKHpEx+VP6X2XmZTH8VUHHkPfKSamXkfGkuOc=
+github.com/fananchong/gotcp v0.0.0-20190730172749-6c5cc5c9257e/go.mod h1:NwqSPUhE3lftRXXTbIYO3aSdkdQSs2gCGIZA4Mi1B6c=
 github.com/gogo/protobuf v1.2.0 h1:xU6/SpYbvkNYiptHJYEDRseDLvYE7wSqhYYNy0QSUzI=
 github.com/gogo/protobuf v1.2.0/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1 h1:mweAR1A6xJ3oS2pRaGiHgQ4OO8tzTaLawm8vnODuwDk=

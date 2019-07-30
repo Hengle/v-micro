@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/fananchong/gotcp"
+	"github.com/fananchong/v-micro/log"
 	"github.com/fananchong/v-micro/transport"
 )
 
@@ -123,6 +124,9 @@ func (trans *transportImpl) Init(opts ...transport.Option) (err error) {
 	}
 	if trans.opts.SendBufSize != 0 {
 		gotcp.DefaultSendBuffSize = trans.opts.SendBufSize
+	}
+	if l := log.GetLogger(); l != nil {
+		gotcp.SetLogger(l)
 	}
 	return
 }
