@@ -71,13 +71,9 @@ func main() {
     cl := proto.NewSayService("greeter", new(Say), service.Client())
 
     // Make request
-    err := cl.Hello(context.Background(), &proto.Request{
+    cl.Hello(context.Background(), &proto.Request{
         Name: "John",
     })
-    if err != nil {
-        fmt.Println(err)
-        return
-    }
 }
 ```
 
