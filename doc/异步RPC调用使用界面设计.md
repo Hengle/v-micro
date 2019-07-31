@@ -86,3 +86,5 @@ func main() {
 
 - 上述使用界面上的不同
 - server / client 底层节点间只维持 1 个连接，不是 call 1 次建立一个连接或有 pool 这种
+- server / client 接口定义上不会有 pub/sub 接口， pub/sub 接口只会 service 层面上获取
+    - 即 server / client / broker 3者为同一层次上的概念
