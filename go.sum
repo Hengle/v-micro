@@ -1,9 +1,11 @@
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/fananchong/gotcp v0.0.0-20190730172749-6c5cc5c9257e h1:syD7RSRKHpEx+VP6X2XmZTH8VUHHkPfKSamXkfGkuOc=
-github.com/fananchong/gotcp v0.0.0-20190730172749-6c5cc5c9257e/go.mod h1:NwqSPUhE3lftRXXTbIYO3aSdkdQSs2gCGIZA4Mi1B6c=
+github.com/fananchong/gotcp v0.0.0-20190730092749-6c5cc5c9257e h1:6J7IB6nOh9lgJLO7d7fIxxoUUMabpnOY9M8v/2rywEM=
+github.com/fananchong/gotcp v0.0.0-20190730092749-6c5cc5c9257e/go.mod h1:NwqSPUhE3lftRXXTbIYO3aSdkdQSs2gCGIZA4Mi1B6c=
 github.com/gogo/protobuf v1.2.0 h1:xU6/SpYbvkNYiptHJYEDRseDLvYE7wSqhYYNy0QSUzI=
 github.com/gogo/protobuf v1.2.0/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
+github.com/golang/protobuf v1.3.2 h1:6nsPYzhq5kReh6QImI3k5qWzO4PEbvbIW2cwSfR/6xs=
+github.com/golang/protobuf v1.3.2/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1 h1:mweAR1A6xJ3oS2pRaGiHgQ4OO8tzTaLawm8vnODuwDk=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/lestrrat-go/envload v0.0.0-20180220234015-a3eb8ddeffcc/go.mod h1:kopuH9ugFRkIXf3YoqHKyrJ9YfUFsckUU9S7B+XP+is=
