@@ -26,6 +26,9 @@
 - 异步调用基于消息队列 pub/sub 模式
   - 多机房部署时，会遇到困惑。消息队列需暴露到外网
   - 服务节点间所有消息处理都经消息队列的话，没有过这种经验（是否可行，线上没听过有这种做法）
+- 无法简单的实现自己的异步 call 插件
+  - [micro/go-micro](https://github.com/micro/go-micro) 已经有众多插件，接口层面已经无法修改
+  - [micro/go-micro](https://github.com/micro/go-micro) 新增异步接口，同样会动摇众多插件的底层实现，基本上不可能
 
 因此有了本深坑3
 
@@ -42,3 +45,8 @@
 - 目标2 ： [micro/go-micro](https://github.com/micro/go-micro) 主要针对微服务，对性能要求不是很高。因此重点改进的就是这里
 - 目标3 ： 趟一遍 [micro/go-micro](https://github.com/micro/go-micro) 主要接口，力求完全体会掌握 [micro/go-micro](https://github.com/micro/go-micro) 精髓
 - 目标4 ： 真正实现一个易用可靠的服务器框架
+
+## 参考版本
+
+- 分支：   master
+- 版本号： 5b327ce72374615404e2fac8c73aaaa7066ca22c
