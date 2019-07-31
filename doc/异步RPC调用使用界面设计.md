@@ -85,3 +85,8 @@ func main() {
 - 需求点： proto.NewSayService 自动生成代码， 多接收 new(Say) 消息回调处理
 - 需求点： cl.Hello 不再阻塞，发送调用就返回
 - proto.NewSayService 可以多次调用，方便组织 proto 文件
+
+## 实现上与 go-micro 不同的地方
+
+- 上述使用界面上的不同
+- server / client 底层节点间只维持 1 个连接，不是 call 1 次建立一个连接或有 pool 这种
