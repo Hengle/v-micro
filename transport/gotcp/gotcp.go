@@ -64,7 +64,7 @@ func (socket *socketImpl) Remote() string {
 func (socket *socketImpl) OnRecv(data []byte, flag byte) {
 	msg, err := unmarshal(data)
 	if err != nil {
-		// TODO: 打印错误
+		log.Errorf("unmarshal data fail, err: %s", err.Error())
 		socket.Close()
 		return
 	}
@@ -72,7 +72,6 @@ func (socket *socketImpl) OnRecv(data []byte, flag byte) {
 }
 
 func (socket *socketImpl) OnClose() {
-	// TODO: 打印关闭
 	if socket.chanRecvMsg != nil {
 		select {
 		case <-socket.chanRecvMsg:
