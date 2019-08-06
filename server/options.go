@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/fananchong/v-micro/codec"
-	"github.com/fananchong/v-micro/mesh"
 	"github.com/fananchong/v-micro/registry"
 	"github.com/fananchong/v-micro/transport"
 )
@@ -15,7 +14,6 @@ type Options struct {
 	Codecs       map[string]codec.NewCodec
 	Registry     registry.Registry
 	Transport    transport.Transport
-	Mesh         mesh.Mesh
 	Metadata     map[string]string
 	Name         string
 	Address      string
@@ -92,13 +90,6 @@ func Registry(r registry.Registry) Option {
 func Transport(t transport.Transport) Option {
 	return func(o *Options) {
 		o.Transport = t
-	}
-}
-
-// Mesh mesh for connection management
-func Mesh(t mesh.Mesh) Option {
-	return func(o *Options) {
-		o.Mesh = t
 	}
 }
 
