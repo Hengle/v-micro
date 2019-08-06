@@ -322,35 +322,33 @@ func (router *router) readHeader(cc codec.Reader) (service *service, mtype *meth
 	return
 }
 
-func (router *router) NewHandler(h interface{}) server.Handler {
-	return newHandler(h)
-}
+func (router *router) Handle(h interface{}) error {
+	rcvr := reflect.ValueOf(h)
+	name := reflect.Indirect(rcvr).Type().Name()
 
-func (router *router) Handle(h server.Handler) error {
 	router.mu.Lock()
 	defer router.mu.Unlock()
 	if router.serviceMap == nil {
 		router.serviceMap = make(map[string]*service)
 	}
 
-	if len(h.Name()) == 0 {
+	if len(name) == 0 {
 		return errors.New("rpc.Handle: handler has no name")
 	}
-	if !isExported(h.Name()) {
-		return errors.New("rpc.Handle: type " + h.Name() + " is not exported")
+	if !isExported(name) {
+		return errors.New("rpc.Handle: type " + name + " is not exported")
 	}
 
-	rcvr := h.Handler()
 	s := new(service)
 	s.typ = reflect.TypeOf(rcvr)
 	s.rcvr = reflect.ValueOf(rcvr)
 
 	// check name
-	if _, present := router.serviceMap[h.Name()]; present {
-		return errors.New("rpc.Handle: service already defined: " + h.Name())
+	if _, present := router.serviceMap[name]; present {
+		return errors.New("rpc.Handle: service already defined: " + name)
 	}
 
-	s.name = h.Name()
+	s.name = name
 	s.method = make(map[string]*methodType)
 
 	// Install the methods

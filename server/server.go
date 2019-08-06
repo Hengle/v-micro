@@ -9,8 +9,7 @@ import (
 type Server interface {
 	Options() Options
 	Init(...Option) error
-	Handle(Handler) error
-	NewHandler(interface{}) Handler
+	Handle(interface{}) error
 	Start() error
 	Stop() error
 	String() string
@@ -42,21 +41,4 @@ type Response interface {
 	WriteHeader(map[string]string)
 	// write a response directly to the client
 	Write([]byte) error
-}
-
-// Handler interface represents a request handler. It's generated
-// by passing any type of public concrete object with endpoints into server.NewHandler.
-// Most will pass in a struct.
-//
-// Example:
-//
-//      type Greeter struct {}
-//
-//      func (g *Greeter) Hello(context, request, response) error {
-//              return nil
-//      }
-//
-type Handler interface {
-	Name() string
-	Handler() interface{}
 }

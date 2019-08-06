@@ -39,6 +39,8 @@ func Init(opt ...Option) {
 	DefaultServer.Init(opt...)
 }
 
+// Handle registers a handler interface with the default server to
+// handle inbound requests
 // NewHandler creates a new handler interface using the default server
 // Handlers are required to be a public object with public
 // endpoints. Call to a service endpoint such as Foo.Bar expects
@@ -49,13 +51,7 @@ func Init(opt ...Option) {
 //		return nil
 //	}
 //
-func NewHandler(h interface{}) Handler {
-	return DefaultServer.NewHandler(h)
-}
-
-// Handle registers a handler interface with the default server to
-// handle inbound requests
-func Handle(h Handler) error {
+func Handle(h interface{}) error {
 	return DefaultServer.Handle(h)
 }
 

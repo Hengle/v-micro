@@ -121,8 +121,9 @@ func (c *rpcCodec) Write(r *codec.Message, b interface{}) error {
 }
 
 func (c *rpcCodec) Close() (err error) {
-	// return c.rwc.Close()
-	return
+	c.buf.Close()
+	c.codec.Close()
+	return nil
 }
 
 func (c *rpcCodec) String() string {

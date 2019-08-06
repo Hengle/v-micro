@@ -56,12 +56,8 @@ func (s *serverImpl) Init(opts ...server.Option) error {
 	return nil
 }
 
-func (s *serverImpl) Handle(h server.Handler) error {
+func (s *serverImpl) Handle(h interface{}) error {
 	return s.router.Handle(h)
-}
-
-func (s *serverImpl) NewHandler(h interface{}) server.Handler {
-	return s.router.NewHandler(h)
 }
 
 func (s *serverImpl) Start() (err error) {
