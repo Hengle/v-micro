@@ -22,8 +22,6 @@ type Request interface {
 	Service() string
 	// The action requested
 	Method() string
-	// Endpoint name requested
-	Endpoint() string
 	// Content type provided
 	ContentType() string
 	// Header of the request

@@ -57,12 +57,11 @@ type Marshaler interface {
 // the communication, likely followed by the body.
 // In the case of an error, body may be nil.
 type Message struct {
-	ID       string
-	Type     MessageType
-	Target   string
-	Method   string
-	Endpoint string
-	Error    string
+	ID      string
+	Type    MessageType
+	Service string
+	Method  string
+	Error   string
 
 	// The values read from the socket
 	Header map[string]string

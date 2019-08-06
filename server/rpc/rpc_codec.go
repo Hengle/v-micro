@@ -2,11 +2,11 @@ package rpc
 
 import (
 	"bytes"
-	"net/rpc"
 
 	"github.com/fananchong/v-micro/codec"
 	"github.com/fananchong/v-micro/codec/proto"
 	"github.com/fananchong/v-micro/transport"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -19,50 +19,114 @@ var (
 	}
 )
 
-type rcpCodec struct {
+type rpcCodec struct {
 	socket transport.Socket
 	codec  codec.Codec
 	req    *transport.Message
 	buf    *readWriteCloser
 }
 
-func (c *rcpCodec) ReadRequestHeader(r *rpc.Request) error {
-	// r.ServiceMethod
-	// var n uint16
-	// binary.Read(c.rwc, binary.LittleEndian, &n)
-	// temp := make([]byte, n)
-	// c.rwc.Read(temp[:])
-	// r.ServiceMethod = string(temp)
-	return nil
+func newRPCCodec(req *transport.Message, socket transport.Socket, c codec.NewCodec) codec.Codec {
+	rwc := &readWriteCloser{
+		rbuf: bytes.NewBuffer(req.Body),
+		wbuf: bytes.NewBuffer(nil),
+	}
+	r := &rpcCodec{
+		buf:    rwc,
+		codec:  c(rwc),
+		req:    req,
+		socket: socket,
+	}
+	return r
 }
 
-func (c *rcpCodec) ReadRequestBody(body interface{}) error {
-	// body string
-	// var n uint16
-	// binary.Read(c.rwc, binary.LittleEndian, &n)
-	// temp := make([]byte, n)
-	// c.rwc.Read(temp[:])
-	// *body.(*string) = string(temp)
-	return nil
+func (c *rpcCodec) ReadHeader(r *codec.Message, t codec.MessageType) (err error) {
+	// the initial message
+	m := codec.Message{
+		Header: c.req.Header,
+		Body:   c.req.Body,
+	}
+
+	// set some internal things
+	getHeaders(&m)
+
+	// read header via codec
+	if err = c.codec.ReadHeader(&m, codec.Request); err != nil {
+		return
+	}
+
+	// set message
+	*r = m
+
+	return
 }
 
-func (c *rcpCodec) WriteResponse(r *rpc.Response, body interface{}) (err error) {
-	// write r.ServiceMethod
-	// binary.Write(c.rwc, binary.LittleEndian, uint16(len(r.ServiceMethod)))
-	// c.rwc.Write([]byte(r.ServiceMethod))
-	// write r.Error
-	// binary.Write(c.rwc, binary.LittleEndian, uint16(len(r.Error)))
-	// c.rwc.Write([]byte(r.Error))
-	// write body
-	// data := []byte(*body.(*string))
-	// binary.Write(c.rwc, binary.LittleEndian, uint16(len(data)))
-	// c.rwc.Write(data)
-	return nil
+func (c *rpcCodec) ReadBody(b interface{}) error {
+	// don't read empty body
+	if len(c.req.Body) == 0 {
+		return nil
+	}
+	// decode the usual way
+	return c.codec.ReadBody(b)
 }
 
-func (c *rcpCodec) Close() (err error) {
+func (c *rpcCodec) Write(r *codec.Message, b interface{}) error {
+	c.buf.wbuf.Reset()
+
+	// create a new message
+	m := &codec.Message{
+		Service: r.Service,
+		Method:  r.Method,
+		ID:      r.ID,
+		Error:   r.Error,
+		Type:    r.Type,
+		Header:  r.Header,
+	}
+
+	if m.Header == nil {
+		m.Header = map[string]string{}
+	}
+
+	setHeaders(m, r)
+
+	// the body being sent
+	var body []byte
+
+	// write the body to codec
+	if err := c.codec.Write(m, b); err != nil {
+		c.buf.wbuf.Reset()
+
+		// write an error if it failed
+		m.Error = errors.Wrapf(err, "Unable to encode body").Error()
+		m.Header["Micro-Error"] = m.Error
+		// no body to write
+		if err := c.codec.Write(m, nil); err != nil {
+			return err
+		}
+	}
+
+	// set the body
+	body = c.buf.wbuf.Bytes()
+
+	// Set content type if theres content
+	if len(body) > 0 {
+		m.Header["Content-Type"] = c.req.Header["Content-Type"]
+	}
+
+	// send on the socket
+	return c.socket.Send(&transport.Message{
+		Header: m.Header,
+		Body:   body,
+	})
+}
+
+func (c *rpcCodec) Close() (err error) {
 	// return c.rwc.Close()
 	return
+}
+
+func (c *rpcCodec) String() string {
+	return "rpc"
 }
 
 // ======================= readWriteCloser =======================
@@ -84,4 +148,34 @@ func (rwc *readWriteCloser) Close() error {
 	rwc.rbuf.Reset()
 	rwc.wbuf.Reset()
 	return nil
+}
+
+// ======================= misc =======================
+
+func getHeader(hdr string, md map[string]string) string {
+	if hd := md[hdr]; len(hd) > 0 {
+		return hd
+	}
+	return ""
+}
+
+func getHeaders(m *codec.Message) {
+	m.ID = getHeader("Micro-Id", m.Header)
+	m.Method = getHeader("Micro-Method", m.Header)
+	m.Service = getHeader("Micro-Service", m.Header)
+}
+
+func setHeaders(m, r *codec.Message) {
+	set := func(hdr, v string) {
+		if len(v) == 0 {
+			return
+		}
+		m.Header[hdr] = v
+	}
+
+	// set headers
+	set("Micro-Id", r.ID)
+	set("Micro-Service", r.Service)
+	set("Micro-Method", r.Method)
+	set("Micro-Error", r.Error)
 }
