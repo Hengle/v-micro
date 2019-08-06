@@ -6,7 +6,7 @@ import (
 	"net"
 
 	"github.com/fananchong/gotcp"
-	"github.com/fananchong/v-micro/log"
+	"github.com/fananchong/v-micro/common/log"
 	"github.com/fananchong/v-micro/transport"
 )
 

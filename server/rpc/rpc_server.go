@@ -10,14 +10,14 @@ import (
 	"time"
 
 	"github.com/fananchong/v-micro/codec"
-	"github.com/fananchong/v-micro/log"
-	"github.com/fananchong/v-micro/metadata"
+	"github.com/fananchong/v-micro/common/log"
+	"github.com/fananchong/v-micro/common/metadata"
+	"github.com/fananchong/v-micro/internal/addr"
+	mnet "github.com/fananchong/v-micro/internal/net"
 	"github.com/fananchong/v-micro/registry"
 	"github.com/fananchong/v-micro/server"
-	"github.com/fananchong/v-micro/server/common"
+	common "github.com/fananchong/v-micro/server/internal"
 	"github.com/fananchong/v-micro/transport"
-	"github.com/fananchong/v-micro/util/addr"
-	mnet "github.com/fananchong/v-micro/util/net"
 )
 
 type rpcServer struct {

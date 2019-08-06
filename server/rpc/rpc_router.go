@@ -17,7 +17,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/fananchong/v-micro/codec"
-	"github.com/fananchong/v-micro/log"
+	"github.com/fananchong/v-micro/common/log"
 	"github.com/fananchong/v-micro/server"
 )
 

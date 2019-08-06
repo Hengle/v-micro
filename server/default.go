@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/fananchong/v-micro/log"
+	"github.com/fananchong/v-micro/common/log"
 	"github.com/google/uuid"
 )
 

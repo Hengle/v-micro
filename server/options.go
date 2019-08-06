@@ -36,6 +36,9 @@ type Options struct {
 	Context context.Context
 }
 
+// Option option
+type Option func(*Options)
+
 // Name Server name
 func Name(n string) Option {
 	return func(o *Options) {
@@ -133,6 +136,3 @@ func WrapHandler(w HandlerWrapper) Option {
 		o.HdlrWrappers = append(o.HdlrWrappers, w)
 	}
 }
-
-// Option option
-type Option func(*Options)

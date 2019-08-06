@@ -31,6 +31,15 @@ type ListenOptions struct {
 	Context context.Context
 }
 
+// Option option
+type Option func(*Options)
+
+// DialOption dial option
+type DialOption func(*DialOptions)
+
+// ListenOption listen option
+type ListenOption func(*ListenOptions)
+
 // RecvBufSize set the receive buffer size
 func RecvBufSize(size int) Option {
 	return func(o *Options) {
@@ -44,12 +53,3 @@ func SendBufSize(size int) Option {
 		o.SendBufSize = size
 	}
 }
-
-// Option option
-type Option func(*Options)
-
-// DialOption dial option
-type DialOption func(*DialOptions)
-
-// ListenOption listen option
-type ListenOption func(*ListenOptions)

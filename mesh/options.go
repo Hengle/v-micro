@@ -17,6 +17,9 @@ type Options struct {
 	Context context.Context
 }
 
+// Option option
+type Option func(*Options)
+
 func newOptions(opt ...Option) Options {
 	opts := Options{}
 	for _, o := range opt {
@@ -47,6 +50,3 @@ func Transport(t transport.Transport) Option {
 		o.Transport = t
 	}
 }
-
-// Option option
-type Option func(*Options)
