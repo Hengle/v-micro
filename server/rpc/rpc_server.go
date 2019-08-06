@@ -20,7 +20,7 @@ import (
 	mnet "github.com/fananchong/v-micro/util/net"
 )
 
-type serverImpl struct {
+type rpcServer struct {
 	router     *router
 	exit       chan int
 	opts       server.Options
@@ -33,19 +33,19 @@ func newRPCServer(opts ...server.Option) server.Server {
 	router := newRPCRouter()
 	router.hdlrWrappers = options.HdlrWrappers
 
-	return &serverImpl{
+	return &rpcServer{
 		opts:   options,
 		router: router,
 		exit:   make(chan int),
 	}
 }
 
-func (s *serverImpl) Options() server.Options {
+func (s *rpcServer) Options() server.Options {
 	opts := s.opts
 	return opts
 }
 
-func (s *serverImpl) Init(opts ...server.Option) error {
+func (s *rpcServer) Init(opts ...server.Option) error {
 	for _, opt := range opts {
 		opt(&s.opts)
 	}
@@ -56,11 +56,11 @@ func (s *serverImpl) Init(opts ...server.Option) error {
 	return nil
 }
 
-func (s *serverImpl) Handle(h interface{}) error {
+func (s *rpcServer) Handle(h interface{}) error {
 	return s.router.Handle(h)
 }
 
-func (s *serverImpl) Start() (err error) {
+func (s *rpcServer) Start() (err error) {
 	config := s.Options()
 
 	// start listening on the transport
@@ -92,7 +92,7 @@ func (s *serverImpl) Start() (err error) {
 	return nil
 }
 
-func (s *serverImpl) Stop() (err error) {
+func (s *rpcServer) Stop() (err error) {
 	if s.ts != nil {
 		s.ts.Close()
 	}
@@ -100,11 +100,11 @@ func (s *serverImpl) Stop() (err error) {
 	return
 }
 
-func (s *serverImpl) String() string {
+func (s *rpcServer) String() string {
 	return "rpc"
 }
 
-func (s *serverImpl) register() (err error) {
+func (s *rpcServer) register() (err error) {
 	var advt, host, port string
 
 	// parse address for host, port
@@ -150,7 +150,6 @@ func (s *serverImpl) register() (err error) {
 	node.Metadata["transport"] = config.Transport.String()
 	node.Metadata["server"] = s.String()
 	node.Metadata["registry"] = config.Registry.String()
-	node.Metadata["protocol"] = s.String() // TODO
 
 	service := &registry.Service{
 		Name:    config.Name,
@@ -178,7 +177,7 @@ func (s *serverImpl) register() (err error) {
 	return
 }
 
-func (s *serverImpl) deregister() (err error) {
+func (s *rpcServer) deregister() (err error) {
 	var advt, host, port string
 
 	config := s.Options()
@@ -231,7 +230,7 @@ func (s *serverImpl) deregister() (err error) {
 	return
 }
 
-func (s *serverImpl) accept() {
+func (s *rpcServer) accept() {
 	for {
 		// listen for connections
 		err := s.ts.Accept(s.serveConn)
@@ -255,7 +254,7 @@ func (s *serverImpl) accept() {
 }
 
 // serveConn serves a single connection
-func (s *serverImpl) serveConn(sock transport.Socket) {
+func (s *rpcServer) serveConn(sock transport.Socket) {
 	defer func() {
 		// close socket
 		sock.Close()
@@ -297,7 +296,7 @@ func (s *serverImpl) serveConn(sock transport.Socket) {
 		if cf, err = s.newCodec(ct); err != nil {
 			sock.Send(&transport.Message{
 				Header: map[string]string{
-					"Content-Type": "text/plain", // TODO
+					"Content-Type": "text/plain", // TODO 需要增加编码类型
 				},
 				Body: []byte(err.Error()),
 			})
@@ -307,28 +306,22 @@ func (s *serverImpl) serveConn(sock transport.Socket) {
 		rcodec := newRPCCodec(&msg, sock, cf)
 
 		// internal request
-		request := &requestImpl{
+		request := &rpcRequest{
 			service:     getHeader("Micro-Service", msg.Header),
 			method:      getHeader("Micro-Method", msg.Header),
 			contentType: ct,
 			codec:       rcodec,
 			header:      msg.Header,
 			body:        msg.Body,
-			socket:      sock,
 		}
 
 		// internal response
-		response := &responseImpl{
-			header: make(map[string]string),
-			socket: sock,
-			codec:  rcodec,
+		response := &rpcResponse{
+			codec: rcodec,
 		}
 
-		// set router
-		r := Router(s.router)
-
 		// serve the actual request using the request router
-		if err := r.ServeRequest(ctx, request, response); err != nil {
+		if err := s.router.ServeRequest(ctx, request, response); err != nil {
 			// write an error response
 			err = rcodec.Write(&codec.Message{
 				Header: msg.Header,
@@ -344,7 +337,7 @@ func (s *serverImpl) serveConn(sock transport.Socket) {
 	}
 }
 
-func (s *serverImpl) registerTTL() {
+func (s *rpcServer) registerTTL() {
 	t := new(time.Ticker)
 
 	// only process if it exists
@@ -383,7 +376,7 @@ Loop:
 	}
 }
 
-func (s *serverImpl) newCodec(contentType string) (codec.NewCodec, error) {
+func (s *rpcServer) newCodec(contentType string) (codec.NewCodec, error) {
 	if cf, ok := s.opts.Codecs[contentType]; ok {
 		return cf, nil
 	}
@@ -391,20 +384,4 @@ func (s *serverImpl) newCodec(contentType string) (codec.NewCodec, error) {
 		return cf, nil
 	}
 	return nil, fmt.Errorf("Unsupported Content-Type: %s", contentType)
-}
-
-// =========================== router ===========================
-
-// Router handle serving messages
-type Router interface {
-	// ServeRequest processes a request to completion
-	ServeRequest(context.Context, server.Request, server.Response) error
-}
-
-type rpcRouter struct {
-	h func(context.Context, server.Request, interface{}) error
-}
-
-func (r rpcRouter) ServeRequest(ctx context.Context, req server.Request, rsp server.Response) error {
-	return r.h(ctx, req, rsp)
 }

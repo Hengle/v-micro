@@ -158,18 +158,11 @@ func (router *router) sendResponse(sending sync.Locker, req *request, reply inte
 	return err
 }
 
-func (s *service) call(ctx context.Context, router *router, sending *sync.Mutex, mtype *methodType, req *request, argv, replyv reflect.Value, cc codec.Writer) error {
+func (s *service) call(ctx context.Context, router *router, sending *sync.Mutex, mtype *methodType, req *request, argv, replyv reflect.Value, cc codec.Writer, r *rpcRequest) error {
 	defer router.freeRequest(req)
 
 	function := mtype.method.Func
 	var returnValues []reflect.Value
-
-	r := &requestImpl{
-		service:     req.msg.Service,
-		contentType: req.msg.Header["Content-Type"],
-		method:      req.msg.Method,
-		body:        req.msg.Body,
-	}
 
 	// only set if not nil
 	if argv.IsValid() {
@@ -248,7 +241,7 @@ func (router *router) freeResponse(resp *response) {
 	router.respLock.Unlock()
 }
 
-func (router *router) readRequest(r server.Request) (service *service, mtype *methodType, req *request, argv, replyv reflect.Value, keepReading bool, err error) {
+func (router *router) readRequest(r *rpcRequest) (service *service, mtype *methodType, req *request, argv, replyv reflect.Value, keepReading bool, err error) {
 	cc := r.Codec()
 
 	service, mtype, req, keepReading, err = router.readHeader(cc)
@@ -369,7 +362,7 @@ func (router *router) Handle(h interface{}) error {
 	return nil
 }
 
-func (router *router) ServeRequest(ctx context.Context, r server.Request, rsp server.Response) error {
+func (router *router) ServeRequest(ctx context.Context, r *rpcRequest, rsp *rpcResponse) error {
 	sending := new(sync.Mutex)
 	service, mtype, req, argv, replyv, keepReading, err := router.readRequest(r)
 	if err != nil {
@@ -382,5 +375,5 @@ func (router *router) ServeRequest(ctx context.Context, r server.Request, rsp se
 		}
 		return err
 	}
-	return service.call(ctx, router, sending, mtype, req, argv, replyv, rsp.Codec())
+	return service.call(ctx, router, sending, mtype, req, argv, replyv, rsp.Codec(), r)
 }

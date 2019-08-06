@@ -1,9 +1,7 @@
 // Package server is an interface for a micro server
 package server
 
-import (
-	"github.com/fananchong/v-micro/codec"
-)
+import "context"
 
 // Server is a simple micro server abstraction
 type Server interface {
@@ -27,18 +25,12 @@ type Request interface {
 	Header() map[string]string
 	// Body is the initial decoded value
 	Body() interface{}
-	// Read the undecoded request body
-	Read() ([]byte, error)
-	// The encoded message stream
-	Codec() codec.Reader
 }
 
-// Response is the response writer for unencoded messages
-type Response interface {
-	// Encoded writer
-	Codec() codec.Writer
-	// Write the header
-	WriteHeader(map[string]string)
-	// write a response directly to the client
-	Write([]byte) error
-}
+// HandlerFunc represents a single method of a handler. It's used primarily
+// for the wrappers. What's handed to the actual method is the concrete
+// request and response types.
+type HandlerFunc func(ctx context.Context, req Request, rsp interface{}) error
+
+// HandlerWrapper wraps the HandlerFunc and returns the equivalent
+type HandlerWrapper func(HandlerFunc) HandlerFunc
