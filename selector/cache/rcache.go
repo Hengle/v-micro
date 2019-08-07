@@ -244,8 +244,13 @@ func (c *cache) update(res *registry.Result) {
 func (c *cache) run(service string) {
 	// set watcher
 	c.Lock()
-	c.watched[service] = true
-	c.Unlock()
+	if _, ok := c.watched[service]; !ok {
+		c.watched[service] = true
+		c.Unlock()
+	} else {
+		c.Unlock()
+		return
+	}
 
 	// delete watcher on exit
 	defer func() {

@@ -15,7 +15,7 @@ type registrySelector struct {
 func (c *registrySelector) newCache() Cache {
 	ropts := []Option{}
 	if c.so.Context != nil {
-		if t, ok := c.so.Context.Value("selector_ttl").(time.Duration); ok {
+		if t, ok := c.so.Context.Value(ttlKey{}).(time.Duration); ok {
 			ropts = append(ropts, WithTTL(t))
 		}
 	}
@@ -65,12 +65,6 @@ func (c *registrySelector) Select(service string, opts ...selector.SelectOption)
 	}
 
 	return sopts.Strategy(services), nil
-}
-
-func (c *registrySelector) Mark(service string, node *registry.Node, err error) {
-}
-
-func (c *registrySelector) Reset(service string) {
 }
 
 // Close stops the watcher and destroys the cache
