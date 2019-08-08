@@ -8,6 +8,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/lestrrat-go/file-rotatelogs v2.2.0+incompatible
 	github.com/lestrrat-go/strftime v0.0.0-20190725011945-5c849dd2c51d // indirect
+	github.com/micro/cli v0.2.0
 	github.com/micro/mdns v0.1.0
 	github.com/mitchellh/hashstructure v1.0.0
 	github.com/pkg/errors v0.8.1

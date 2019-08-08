@@ -93,3 +93,8 @@ func (r *rpcClient) Call(ctx context.Context, request client.Request, opts ...cl
 func (r *rpcClient) String() string {
 	return "rpc"
 }
+
+// NewClient Creates a new client with the options passed in
+func NewClient(opt ...client.Option) client.Client {
+	return newRPCClient(opt...)
+}

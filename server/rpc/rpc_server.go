@@ -395,3 +395,8 @@ func (s *rpcServer) newCodec(contentType string) (codec.NewCodec, error) {
 	}
 	return nil, fmt.Errorf("Unsupported Content-Type: %s", contentType)
 }
+
+// NewServer returns a new server with options passed in
+func NewServer(opt ...server.Option) server.Server {
+	return newRPCServer(opt...)
+}
