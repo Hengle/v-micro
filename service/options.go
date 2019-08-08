@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/fananchong/v-micro/client"
+	"github.com/fananchong/v-micro/common/log"
 	"github.com/fananchong/v-micro/registry"
 	"github.com/fananchong/v-micro/selector"
 	"github.com/fananchong/v-micro/server"
@@ -23,12 +24,14 @@ type Options struct {
 	Action func(*cli.Context)
 
 	// We need pointers to things so we can swap them out if needed.
+	Logger    *log.Logger
 	Registry  *registry.Registry
 	Selector  *selector.Selector
 	Transport *transport.Transport
 	Client    *client.Client
 	Server    *server.Server
 
+	Loggers    map[string]func(...log.Option) log.Logger
 	Clients    map[string]func(...client.Option) client.Client
 	Registries map[string]func(...registry.Option) registry.Registry
 	Selectors  map[string]func(...selector.Option) selector.Selector
@@ -68,6 +71,13 @@ func Version(v string) Option {
 func Selector(s *selector.Selector) Option {
 	return func(o *Options) {
 		o.Selector = s
+	}
+}
+
+// Logger logger
+func Logger(l *log.Logger) Option {
+	return func(o *Options) {
+		o.Logger = l
 	}
 }
 

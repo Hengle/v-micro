@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/fananchong/v-micro/client"
+	"github.com/fananchong/v-micro/common/log"
 	"github.com/fananchong/v-micro/registry"
 	"github.com/fananchong/v-micro/selector"
 	"github.com/fananchong/v-micro/server"
@@ -14,6 +15,7 @@ import (
 
 // Options options
 type Options struct {
+	Logger    log.Logger
 	Client    client.Client
 	Server    server.Server
 	Registry  registry.Registry
@@ -34,8 +36,12 @@ type Options struct {
 	Context context.Context
 }
 
+// Option option
+type Option func(*Options)
+
 func newOptions(opts ...Option) Options {
 	opt := Options{
+		Logger:    log.DefaultLogger,
 		Client:    client.DefaultClient,
 		Server:    server.DefaultServer,
 		Registry:  registry.DefaultRegistry,
@@ -48,6 +54,13 @@ func newOptions(opts ...Option) Options {
 	}
 
 	return opt
+}
+
+// Logger logger
+func Logger(l log.Logger) Option {
+	return func(o *Options) {
+		o.Logger = l
+	}
 }
 
 // Client client

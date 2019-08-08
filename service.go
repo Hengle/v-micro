@@ -48,6 +48,7 @@ func (s *service) Init(opts ...Option) {
 		_ = s.cmd.Init(
 			cmd.Flags(s.opts.Flags...),
 			cmd.Action(s.opts.Action),
+			cmd.Logger(&s.opts.Logger),
 			cmd.Registry(&s.opts.Registry),
 			cmd.Transport(&s.opts.Transport),
 			cmd.Client(&s.opts.Client),

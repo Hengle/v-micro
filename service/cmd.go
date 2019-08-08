@@ -3,7 +3,6 @@ package service
 import (
 	"fmt"
 	"io"
-	"log"
 	"math/rand"
 	"os"
 	"strings"
@@ -11,6 +10,8 @@ import (
 
 	"github.com/fananchong/v-micro/client"
 	crpc "github.com/fananchong/v-micro/client/rpc"
+	"github.com/fananchong/v-micro/common/log"
+	"github.com/fananchong/v-micro/common/log/logrus"
 	"github.com/fananchong/v-micro/registry"
 	"github.com/fananchong/v-micro/registry/mdns"
 	"github.com/fananchong/v-micro/selector"
@@ -45,9 +46,14 @@ var (
 	// DefaultFlags default flags
 	DefaultFlags = []cli.Flag{
 		cli.StringFlag{
+			Name:   "logger",
+			EnvVar: "MICRO_LOGGER",
+			Usage:  "Logger for v-micro; logrus",
+		},
+		cli.StringFlag{
 			Name:   "client",
 			EnvVar: "MICRO_CLIENT",
-			Usage:  "Client for go-micro; rpc",
+			Usage:  "Client for v-micro; rpc",
 		},
 		cli.IntFlag{
 			Name:   "client_retries",
@@ -68,7 +74,7 @@ var (
 		cli.StringFlag{
 			Name:   "server",
 			EnvVar: "MICRO_SERVER",
-			Usage:  "Server for go-micro; rpc",
+			Usage:  "Server for v-micro; rpc",
 		},
 		cli.StringFlag{
 			Name:   "server_name",
@@ -121,6 +127,16 @@ var (
 			EnvVar: "MICRO_TRANSPORT",
 			Usage:  "Transport mechanism used; http",
 		},
+		cli.IntFlag{
+			Name:   "log_level",
+			EnvVar: "MICRO_LOG_LEVEL",
+			Usage:  "Logger level",
+		},
+	}
+
+	// DefaultLogs default logs
+	DefaultLogs = map[string]func(...log.Option) log.Logger{
+		"logrus": logrus.NewLogger,
 	}
 
 	// DefaultClients default clients
@@ -149,6 +165,7 @@ var (
 	}
 
 	// used for default selection as the fall back
+	defaultLog       = "logrus"
 	defaultClient    = "rpc"
 	defaultServer    = "rpc"
 	defaultRegistry  = "mdns"
@@ -166,6 +183,9 @@ func init() {
 }
 
 func newCmd(opts ...Option) Cmd {
+	if log.DefaultLogger == nil {
+		log.DefaultLogger = DefaultLogs[defaultLog]()
+	}
 	if registry.DefaultRegistry == nil {
 		registry.DefaultRegistry = DefaultRegistries[defaultRegistry]()
 	}
@@ -182,12 +202,14 @@ func newCmd(opts ...Option) Cmd {
 		server.DefaultServer = DefaultServers[defaultServer]()
 	}
 	options := Options{
+		Logger:    &log.DefaultLogger,
 		Client:    &client.DefaultClient,
 		Registry:  &registry.DefaultRegistry,
 		Server:    &server.DefaultServer,
 		Selector:  &selector.DefaultSelector,
 		Transport: &transport.DefaultTransport,
 
+		Loggers:    DefaultLogs,
 		Clients:    DefaultClients,
 		Registries: DefaultRegistries,
 		Selectors:  DefaultSelectors,
@@ -232,6 +254,15 @@ func (c *cmd) Before(ctx *cli.Context) error {
 	// If flags are set then use them otherwise do nothing
 	var serverOpts []server.Option
 	var clientOpts []client.Option
+	var logOpts []log.Option
+
+	// Set the logger
+	if name := ctx.String("logger"); len(name) > 0 {
+		// only change if we have the client and type differs
+		if l, ok := c.opts.Loggers[name]; ok && (*c.opts.Logger).String() != name {
+			*c.opts.Logger = l()
+		}
+	}
 
 	// Set the client
 	if name := ctx.String("client"); len(name) > 0 {
@@ -261,7 +292,8 @@ func (c *cmd) Before(ctx *cli.Context) error {
 		clientOpts = append(clientOpts, client.Registry(*c.opts.Registry))
 
 		if err := (*c.opts.Selector).Init(selector.Registry(*c.opts.Registry)); err != nil {
-			log.Fatalf("Error configuring registry: %v", err)
+			log.Errorf("Error configuring registry: %v", err)
+			os.Exit(1)
 		}
 
 		clientOpts = append(clientOpts, client.Selector(*c.opts.Selector))
@@ -310,20 +342,24 @@ func (c *cmd) Before(ctx *cli.Context) error {
 
 	if len(ctx.String("registry_address")) > 0 {
 		if err := (*c.opts.Registry).Init(registry.Addrs(strings.Split(ctx.String("registry_address"), ",")...)); err != nil {
-			log.Fatalf("Error configuring registry: %v", err)
+			log.Errorf("Error configuring registry: %v", err)
+			os.Exit(1)
 		}
 	}
-
+	serverName := server.DefaultName
 	if len(ctx.String("server_name")) > 0 {
 		serverOpts = append(serverOpts, server.Name(ctx.String("server_name")))
+		serverName = ctx.String("server_name")
 	}
 
 	if len(ctx.String("server_version")) > 0 {
 		serverOpts = append(serverOpts, server.Version(ctx.String("server_version")))
 	}
 
+	serverID := server.DefaultID
 	if len(ctx.String("server_id")) > 0 {
 		serverOpts = append(serverOpts, server.ID(ctx.String("server_id")))
+		serverID = ctx.String("server_id")
 	}
 
 	if len(ctx.String("server_address")) > 0 {
@@ -347,18 +383,31 @@ func (c *cmd) Before(ctx *cli.Context) error {
 		clientOpts = append(clientOpts, client.Retries(r))
 	}
 
+	if level := ctx.Int("log_level"); level >= 0 {
+		logOpts = append(logOpts, log.Level(log.LevelType(level)))
+	}
+	logOpts = append(logOpts, log.Name(fmt.Sprintf("%s_%s", serverName, serverID)))
+
+	if err := (*c.opts.Logger).Init(logOpts...); err != nil {
+		log.Errorf("Error init logger: %v", err)
+		os.Exit(1)
+	}
+	log.Infof("Logger [%s] enable", (*c.opts.Logger).String())
+
 	// We have some command line opts for the server.
 	// Lets set it up
 	if len(serverOpts) > 0 {
 		if err := (*c.opts.Server).Init(serverOpts...); err != nil {
-			log.Fatalf("Error configuring server: %v", err)
+			log.Errorf("Error configuring server: %v", err)
+			os.Exit(1)
 		}
 	}
 
 	// Use an init option?
 	if len(clientOpts) > 0 {
 		if err := (*c.opts.Client).Init(clientOpts...); err != nil {
-			log.Fatalf("Error configuring client: %v", err)
+			log.Errorf("Error configuring client: %v", err)
+			os.Exit(1)
 		}
 	}
 
