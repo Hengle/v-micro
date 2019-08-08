@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/fananchong/v-micro/common/log"
 	"github.com/fananchong/v-micro/registry"
 	"github.com/micro/mdns"
 )
@@ -21,6 +22,7 @@ func (m *mdnsWatcher) Next() (*registry.Result, error) {
 		case e := <-m.ch:
 			txt, err := decode(e.InfoFields)
 			if err != nil {
+				log.Error(err)
 				continue
 			}
 
@@ -47,7 +49,6 @@ func (m *mdnsWatcher) Next() (*registry.Result, error) {
 				Version: txt.Version,
 			}
 
-			// TODO: don't hardcode .local.
 			if !strings.HasSuffix(e.Name, "."+service.Name+".local.") {
 				continue
 			}

@@ -5,6 +5,9 @@ import (
 
 	"github.com/fananchong/v-micro/codec"
 	"github.com/fananchong/v-micro/codec/proto"
+	"github.com/fananchong/v-micro/common/log"
+	"github.com/fananchong/v-micro/internal/buffer"
+	hcodec "github.com/fananchong/v-micro/internal/codec"
 	"github.com/fananchong/v-micro/transport"
 	"github.com/pkg/errors"
 )
@@ -23,13 +26,13 @@ type rpcCodec struct {
 	socket transport.Socket
 	codec  codec.Codec
 	req    *transport.Message
-	buf    *readWriteCloser
+	buf    *buffer.ReadWriteCloser
 }
 
 func newRPCCodec(req *transport.Message, socket transport.Socket, c codec.NewCodec) codec.Codec {
-	rwc := &readWriteCloser{
-		rbuf: bytes.NewBuffer(req.Body),
-		wbuf: bytes.NewBuffer(nil),
+	rwc := &buffer.ReadWriteCloser{
+		RBuf: bytes.NewBuffer(req.Body),
+		WBuf: bytes.NewBuffer(nil),
 	}
 	r := &rpcCodec{
 		buf:    rwc,
@@ -48,10 +51,11 @@ func (c *rpcCodec) ReadHeader(r *codec.Message, t codec.MessageType) (err error)
 	}
 
 	// set some internal things
-	getHeaders(&m)
+	hcodec.GetHeaders(&m)
 
 	// read header via codec
 	if err = c.codec.ReadHeader(&m, codec.Request); err != nil {
+		log.Error(err)
 		return
 	}
 
@@ -71,7 +75,7 @@ func (c *rpcCodec) ReadBody(b interface{}) error {
 }
 
 func (c *rpcCodec) Write(r *codec.Message, b interface{}) error {
-	c.buf.wbuf.Reset()
+	c.buf.WBuf.Reset()
 
 	// create a new message
 	m := &codec.Message{
@@ -87,26 +91,27 @@ func (c *rpcCodec) Write(r *codec.Message, b interface{}) error {
 		m.Header = map[string]string{}
 	}
 
-	setHeaders(m, r)
+	hcodec.SetHeaders(m, r)
 
 	// the body being sent
 	var body []byte
 
 	// write the body to codec
 	if err := c.codec.Write(m, b); err != nil {
-		c.buf.wbuf.Reset()
+		c.buf.WBuf.Reset()
 
 		// write an error if it failed
 		m.Error = errors.Wrapf(err, "Unable to encode body").Error()
 		m.Header["Micro-Error"] = m.Error
 		// no body to write
 		if err := c.codec.Write(m, nil); err != nil {
+			log.Error(err)
 			return err
 		}
 	}
 
 	// set the body
-	body = c.buf.wbuf.Bytes()
+	body = c.buf.WBuf.Bytes()
 
 	// Set content type if theres content
 	if len(body) > 0 {
@@ -128,55 +133,4 @@ func (c *rpcCodec) Close() (err error) {
 
 func (c *rpcCodec) String() string {
 	return "rpc"
-}
-
-// ======================= readWriteCloser =======================
-
-type readWriteCloser struct {
-	wbuf *bytes.Buffer
-	rbuf *bytes.Buffer
-}
-
-func (rwc *readWriteCloser) Read(p []byte) (n int, err error) {
-	return rwc.rbuf.Read(p)
-}
-
-func (rwc *readWriteCloser) Write(p []byte) (n int, err error) {
-	return rwc.wbuf.Write(p)
-}
-
-func (rwc *readWriteCloser) Close() error {
-	rwc.rbuf.Reset()
-	rwc.wbuf.Reset()
-	return nil
-}
-
-// ======================= misc =======================
-
-func getHeader(hdr string, md map[string]string) string {
-	if hd := md[hdr]; len(hd) > 0 {
-		return hd
-	}
-	return ""
-}
-
-func getHeaders(m *codec.Message) {
-	m.ID = getHeader("Micro-Id", m.Header)
-	m.Method = getHeader("Micro-Method", m.Header)
-	m.Service = getHeader("Micro-Service", m.Header)
-}
-
-func setHeaders(m, r *codec.Message) {
-	set := func(hdr, v string) {
-		if len(v) == 0 {
-			return
-		}
-		m.Header[hdr] = v
-	}
-
-	// set headers
-	set("Micro-Id", r.ID)
-	set("Micro-Service", r.Service)
-	set("Micro-Method", r.Method)
-	set("Micro-Error", r.Error)
 }

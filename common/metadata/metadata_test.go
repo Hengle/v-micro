@@ -25,7 +25,7 @@ func TestMetadataContext(t *testing.T) {
 		"foo": "bar",
 	}
 
-	ctx := NewContext(context.TODO(), md)
+	ctx := NewContext(context.Background(), md)
 
 	emd, ok := FromContext(ctx)
 	if !ok {

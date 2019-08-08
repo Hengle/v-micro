@@ -103,6 +103,7 @@ func (c *cache) get(service string) ([]*registry.Service, error) {
 		// ask the registry
 		services, err := c.Registry.GetService(service)
 		if err != nil {
+			log.Error(err)
 			return nil, err
 		}
 
@@ -344,6 +345,7 @@ func (c *cache) watch(w registry.Watcher) error {
 	for {
 		res, err := w.Next()
 		if err != nil {
+			log.Error(err)
 			close(stop)
 			return err
 		}
@@ -355,6 +357,7 @@ func (c *cache) GetService(service string) ([]*registry.Service, error) {
 	// get the service
 	services, err := c.get(service)
 	if err != nil {
+		log.Error(err)
 		return nil, err
 	}
 

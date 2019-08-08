@@ -13,6 +13,7 @@ import (
 	"github.com/fananchong/v-micro/common/log"
 	"github.com/fananchong/v-micro/common/metadata"
 	"github.com/fananchong/v-micro/internal/addr"
+	hcodec "github.com/fananchong/v-micro/internal/codec"
 	mnet "github.com/fananchong/v-micro/internal/net"
 	"github.com/fananchong/v-micro/registry"
 	"github.com/fananchong/v-micro/server"
@@ -65,6 +66,7 @@ func (s *rpcServer) Start() (err error) {
 
 	// start listening on the transport
 	if s.ts, err = config.Transport.Listen(config.Address); err != nil {
+		log.Error(err)
 		return
 	}
 
@@ -123,6 +125,7 @@ func (s *rpcServer) register() (err error) {
 		// ipv6 address in format [host]:port or ipv4 host:port
 		host, port, err = net.SplitHostPort(advt)
 		if err != nil {
+			log.Error(err)
 			return err
 		}
 	} else {
@@ -131,6 +134,7 @@ func (s *rpcServer) register() (err error) {
 
 	addr, err := addr.Extract(host)
 	if err != nil {
+		log.Error(err)
 		return err
 	}
 
@@ -165,6 +169,7 @@ func (s *rpcServer) register() (err error) {
 	rOpts := []registry.RegisterOption{registry.RegisterTTL(config.RegisterTTL)}
 
 	if err := config.Registry.Register(service, rOpts...); err != nil {
+		log.Error(err)
 		return err
 	}
 
@@ -195,6 +200,7 @@ func (s *rpcServer) deregister() (err error) {
 		// ipv6 address in format [host]:port or ipv4 host:port
 		host, port, err = net.SplitHostPort(advt)
 		if err != nil {
+			log.Error(err)
 			return err
 		}
 	} else {
@@ -203,6 +209,7 @@ func (s *rpcServer) deregister() (err error) {
 
 	addr, err := addr.Extract(host)
 	if err != nil {
+		log.Error(err)
 		return err
 	}
 
@@ -219,6 +226,7 @@ func (s *rpcServer) deregister() (err error) {
 
 	log.Infof("Registry [%s] Deregistering node: %s", config.Registry.String(), node.ID)
 	if err := config.Registry.Deregister(service); err != nil {
+		log.Error(err)
 		return err
 	}
 
@@ -268,6 +276,7 @@ func (s *rpcServer) serveConn(sock transport.Socket) {
 	for {
 		var msg transport.Message
 		if err := sock.Recv(&msg); err != nil {
+			log.Error(err)
 			return
 		}
 
@@ -294,6 +303,7 @@ func (s *rpcServer) serveConn(sock transport.Socket) {
 		var cf codec.NewCodec
 		var err error
 		if cf, err = s.newCodec(ct); err != nil {
+			log.Error(err)
 			sock.Send(&transport.Message{
 				Header: map[string]string{
 					"Content-Type": "text/plain", // TODO 需要增加编码类型
@@ -307,8 +317,8 @@ func (s *rpcServer) serveConn(sock transport.Socket) {
 
 		// internal request
 		request := &rpcRequest{
-			service:     getHeader("Micro-Service", msg.Header),
-			method:      getHeader("Micro-Method", msg.Header),
+			service:     hcodec.GetHeader("Micro-Service", msg.Header),
+			method:      hcodec.GetHeader("Micro-Method", msg.Header),
 			contentType: ct,
 			codec:       rcodec,
 			header:      msg.Header,

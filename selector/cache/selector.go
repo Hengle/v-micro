@@ -3,6 +3,7 @@ package cache
 import (
 	"time"
 
+	"github.com/fananchong/v-micro/common/log"
 	"github.com/fananchong/v-micro/registry"
 	"github.com/fananchong/v-micro/selector"
 )
@@ -51,6 +52,7 @@ func (c *registrySelector) Select(service string, opts ...selector.SelectOption)
 	// if that fails go directly to the registry
 	services, err := c.rc.GetService(service)
 	if err != nil {
+		log.Error(err)
 		return nil, err
 	}
 

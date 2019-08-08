@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fananchong/v-micro/common/log"
 	"github.com/fananchong/v-micro/registry"
 	"github.com/micro/mdns"
 	hash "github.com/mitchellh/hashstructure"
@@ -73,11 +74,13 @@ func (m *mdnsRegistry) Register(service *registry.Service, opts ...registry.Regi
 			nil,
 		)
 		if err != nil {
+			log.Error(err)
 			return err
 		}
 
 		srv, err := mdns.NewServer(&mdns.Config{Zone: &mdns.DNSSDService{s}})
 		if err != nil {
+			log.Error(err)
 			return err
 		}
 
@@ -91,6 +94,7 @@ func (m *mdnsRegistry) Register(service *registry.Service, opts ...registry.Regi
 		// create hash of service; uint64
 		h, err := hash.Hash(node, nil)
 		if err != nil {
+			log.Error(err)
 			gerr = err
 			continue
 		}
@@ -124,6 +128,7 @@ func (m *mdnsRegistry) Register(service *registry.Service, opts ...registry.Regi
 		})
 
 		if err != nil {
+			log.Error(err)
 			gerr = err
 			continue
 		}
@@ -131,6 +136,7 @@ func (m *mdnsRegistry) Register(service *registry.Service, opts ...registry.Regi
 		//
 		host, pt, err := net.SplitHostPort(node.Address)
 		if err != nil {
+			log.Error(err)
 			gerr = err
 			continue
 		}
@@ -147,12 +153,14 @@ func (m *mdnsRegistry) Register(service *registry.Service, opts ...registry.Regi
 			txt,
 		)
 		if err != nil {
+			log.Error(err)
 			gerr = err
 			continue
 		}
 
 		srv, err := mdns.NewServer(&mdns.Config{Zone: s})
 		if err != nil {
+			log.Error(err)
 			gerr = err
 			continue
 		}
@@ -229,6 +237,7 @@ func (m *mdnsRegistry) GetService(service string) ([]*registry.Service, error) {
 
 				txt, err := decode(e.InfoFields)
 				if err != nil {
+					log.Error(err)
 					continue
 				}
 
@@ -260,6 +269,7 @@ func (m *mdnsRegistry) GetService(service string) ([]*registry.Service, error) {
 
 	// execute the query
 	if err := mdns.Query(p); err != nil {
+		log.Error(err)
 		return nil, err
 	}
 
@@ -311,6 +321,7 @@ func (m *mdnsRegistry) ListServices() ([]*registry.Service, error) {
 
 	// execute query
 	if err := mdns.Query(p); err != nil {
+		log.Error(err)
 		return nil, err
 	}
 
@@ -334,6 +345,7 @@ func (m *mdnsRegistry) Watch(opts ...registry.WatchOption) (registry.Watcher, er
 
 	go func() {
 		if err := mdns.Listen(md.ch, md.exit); err != nil {
+			log.Error(err)
 			md.Stop()
 		}
 	}()

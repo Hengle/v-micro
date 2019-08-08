@@ -11,6 +11,9 @@ import (
 
 // Options options
 type Options struct {
+	// Used to select codec
+	ContentType string
+
 	// Plugged interfaces
 	Codecs    map[string]codec.NewCodec
 	Registry  registry.Registry
@@ -32,8 +35,6 @@ type Options struct {
 type CallOptions struct {
 	SelectOptions []selector.SelectOption
 
-	// Address of remote hosts	// TODO
-	Address []string
 	// Backoff func
 	Backoff BackoffFunc
 	// Check if retriable func
@@ -55,39 +56,17 @@ type Option func(*Options)
 // CallOption used by Call or Stream
 type CallOption func(*CallOptions)
 
-func newOptions(options ...Option) Options {
-	opts := Options{
-		Codecs: make(map[string]codec.NewCodec),
-		CallOptions: CallOptions{
-			Backoff: DefaultBackoff,
-			Retry:   DefaultRetry,
-			Retries: DefaultRetries,
-		},
-	}
-
-	for _, o := range options {
-		o(&opts)
-	}
-
-	if opts.Registry == nil {
-		opts.Registry = registry.DefaultRegistry
-	}
-
-	if opts.Selector == nil {
-		opts.Selector = selector.DefaultSelector
-	}
-
-	if opts.Transport == nil {
-		opts.Transport = transport.DefaultTransport
-	}
-
-	return opts
-}
-
 // Codec to be used to encode/decode requests for a given content type
 func Codec(contentType string, c codec.NewCodec) Option {
 	return func(o *Options) {
 		o.Codecs[contentType] = c
+	}
+}
+
+// ContentType Default content type of the client
+func ContentType(ct string) Option {
+	return func(o *Options) {
+		o.ContentType = ct
 	}
 }
 
@@ -150,13 +129,6 @@ func Retry(fn RetryFunc) Option {
 }
 
 // Call Options
-
-// WithAddress sets the remote addresses to use rather than using service discovery
-func WithAddress(a ...string) CallOption {
-	return func(o *CallOptions) {
-		o.Address = a
-	}
-}
 
 // WithSelectOption select option
 func WithSelectOption(so ...selector.SelectOption) CallOption {

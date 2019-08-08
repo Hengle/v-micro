@@ -7,11 +7,14 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"strings"
+
+	"github.com/fananchong/v-micro/common/log"
 )
 
 func encode(txt *mdnsTxt) ([]string, error) {
 	b, err := json.Marshal(txt)
 	if err != nil {
+		log.Error(err)
 		return nil, err
 	}
 
@@ -20,6 +23,7 @@ func encode(txt *mdnsTxt) ([]string, error) {
 
 	w := zlib.NewWriter(&buf)
 	if _, err := w.Write(b); err != nil {
+		log.Error(err)
 		return nil, err
 	}
 	w.Close()
@@ -49,23 +53,27 @@ func decode(record []string) (*mdnsTxt, error) {
 
 	hr, err := hex.DecodeString(encoded)
 	if err != nil {
+		log.Error(err)
 		return nil, err
 	}
 
 	br := bytes.NewReader(hr)
 	zr, err := zlib.NewReader(br)
 	if err != nil {
+		log.Error(err)
 		return nil, err
 	}
 
 	rbuf, err := ioutil.ReadAll(zr)
 	if err != nil {
+		log.Error(err)
 		return nil, err
 	}
 
 	var txt *mdnsTxt
 
 	if err := json.Unmarshal(rbuf, &txt); err != nil {
+		log.Error(err)
 		return nil, err
 	}
 
