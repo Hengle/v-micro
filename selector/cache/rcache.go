@@ -107,10 +107,9 @@ func (c *cache) get(service string) ([]*registry.Service, error) {
 			return nil, err
 		}
 
-		// cache results
-		c.Lock()
-		c.set(service, registryCopy(services))
-		c.Unlock()
+		for _, s := range services {
+			c.update(&registry.Result{Action: "update", Service: s})
+		}
 
 		return services, nil
 	}
@@ -140,19 +139,11 @@ func (c *cache) update(res *registry.Result) {
 	c.Lock()
 	defer c.Unlock()
 
+LABEL:
 	services, ok := c.cache[res.Service.Name]
 	if !ok {
-		// we're not going to cache anything
-		// unless there was already a lookup
-		return
-	}
-
-	if len(res.Service.Nodes) == 0 {
-		switch res.Action {
-		case "delete":
-			c.del(res.Service.Name)
-		}
-		return
+		c.cache[res.Service.Name] = make([]*registry.Service, 0)
+		goto LABEL
 	}
 
 	// existing service found
@@ -169,6 +160,9 @@ func (c *cache) update(res *registry.Result) {
 	case "create", "update":
 		if service == nil {
 			c.set(res.Service.Name, append(services, res.Service))
+			for _, cur := range res.Service.Nodes {
+				log.Infof("service [%s-%s] register", service.Name, cur.ID)
+			}
 			return
 		}
 
@@ -183,6 +177,7 @@ func (c *cache) update(res *registry.Result) {
 			}
 			if !seen {
 				res.Service.Nodes = append(res.Service.Nodes, cur)
+				log.Infof("service [%s-%s] register", service.Name, cur.ID)
 			}
 		}
 
@@ -206,6 +201,8 @@ func (c *cache) update(res *registry.Result) {
 			}
 			if !seen {
 				nodes = append(nodes, cur)
+			} else {
+				log.Infof("service [%s-%s] deregister", service.Name, cur.ID)
 			}
 		}
 
