@@ -1,6 +1,8 @@
 package logrus
 
 import (
+	"io"
+	"os"
 	"time"
 
 	"github.com/fananchong/v-micro/common/log"
@@ -27,7 +29,11 @@ func (l *logger) Init(opt ...log.Option) (err error) {
 		rotatelogs.WithLinkName(l.opts.Name),
 		rotatelogs.WithRotationTime(6*time.Hour),
 	); err == nil {
-		l.SetOutput(output)
+		if l.opts.ToStdOut {
+			l.SetOutput(io.MultiWriter(os.Stdout, output))
+		} else {
+			l.SetOutput(output)
+		}
 	}
 	return
 }

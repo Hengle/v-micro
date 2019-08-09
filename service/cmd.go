@@ -110,7 +110,7 @@ var (
 		cli.StringFlag{
 			Name:   "registry",
 			EnvVar: "MICRO_REGISTRY",
-			Usage:  "Registry for discovery. consul, mdns",
+			Usage:  "Registry for discovery. mdns",
 		},
 		cli.StringFlag{
 			Name:   "registry_address",
@@ -125,12 +125,17 @@ var (
 		cli.StringFlag{
 			Name:   "transport",
 			EnvVar: "MICRO_TRANSPORT",
-			Usage:  "Transport mechanism used; http",
+			Usage:  "Transport mechanism used; gotcp",
 		},
 		cli.IntFlag{
 			Name:   "log_level",
 			EnvVar: "MICRO_LOG_LEVEL",
 			Usage:  "Logger level",
+		},
+		cli.BoolFlag{
+			Name:   "log_to_stdout",
+			EnvVar: "MICRO_LOG_TO_STDOUT",
+			Usage:  "Log to stdout",
 		},
 	}
 
@@ -215,6 +220,7 @@ func newCmd(opts ...Option) Cmd {
 		Selectors:  DefaultSelectors,
 		Servers:    DefaultServers,
 		Transports: DefaultTransports,
+		Action:     func(c *cli.Context) {},
 	}
 
 	for _, o := range opts {
@@ -292,8 +298,7 @@ func (c *cmd) Before(ctx *cli.Context) error {
 		clientOpts = append(clientOpts, client.Registry(*c.opts.Registry))
 
 		if err := (*c.opts.Selector).Init(selector.Registry(*c.opts.Registry)); err != nil {
-			log.Errorf("Error configuring registry: %v", err)
-			os.Exit(1)
+			log.Fatalf("Error configuring registry: %v", err)
 		}
 
 		clientOpts = append(clientOpts, client.Selector(*c.opts.Selector))
@@ -342,8 +347,7 @@ func (c *cmd) Before(ctx *cli.Context) error {
 
 	if len(ctx.String("registry_address")) > 0 {
 		if err := (*c.opts.Registry).Init(registry.Addrs(strings.Split(ctx.String("registry_address"), ",")...)); err != nil {
-			log.Errorf("Error configuring registry: %v", err)
-			os.Exit(1)
+			log.Fatalf("Error configuring registry: %v", err)
 		}
 	}
 	serverName := server.DefaultName
@@ -386,30 +390,40 @@ func (c *cmd) Before(ctx *cli.Context) error {
 	if level := ctx.Int("log_level"); level >= 0 {
 		logOpts = append(logOpts, log.Level(log.LevelType(level)))
 	}
+
+	if tostdout := ctx.Bool("log_to_stdout"); tostdout {
+		logOpts = append(logOpts, log.ToStdOut(tostdout))
+	}
+
 	logOpts = append(logOpts, log.Name(fmt.Sprintf("%s_%s", serverName, serverID)))
 
 	if err := (*c.opts.Logger).Init(logOpts...); err != nil {
-		log.Errorf("Error init logger: %v", err)
-		os.Exit(1)
+		log.Fatalf("Error init logger: %v", err)
 	}
-	log.Infof("Logger [%s] enable", (*c.opts.Logger).String())
+
+	if err := (*c.opts.Transport).Init(); err != nil {
+		log.Fatalf("Error init transport: %v", err)
+	}
 
 	// We have some command line opts for the server.
 	// Lets set it up
 	if len(serverOpts) > 0 {
 		if err := (*c.opts.Server).Init(serverOpts...); err != nil {
-			log.Errorf("Error configuring server: %v", err)
-			os.Exit(1)
+			log.Fatalf("Error configuring server: %v", err)
 		}
 	}
 
 	// Use an init option?
 	if len(clientOpts) > 0 {
 		if err := (*c.opts.Client).Init(clientOpts...); err != nil {
-			log.Errorf("Error configuring client: %v", err)
-			os.Exit(1)
+			log.Fatalf("Error configuring client: %v", err)
 		}
 	}
+
+	log.Infof("Install plugin: Logger [%s], Server [%s], Client [%s]",
+		(*c.opts.Logger).String(),
+		(*c.opts.Server).String(),
+		(*c.opts.Client).String())
 
 	return nil
 }

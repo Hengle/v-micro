@@ -46,6 +46,7 @@ func newOptions(opts ...Option) Options {
 		Server:    server.DefaultServer,
 		Registry:  registry.DefaultRegistry,
 		Transport: transport.DefaultTransport,
+		Action:    func(c *cli.Context) {},
 		Context:   context.Background(),
 	}
 

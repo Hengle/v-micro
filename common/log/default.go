@@ -23,6 +23,16 @@ func Errorf(format string, v ...interface{}) {
 	DefaultLogger.Errorf(format, v...)
 }
 
+// Fatal fatal
+func Fatal(v ...interface{}) {
+	DefaultLogger.Fatal(v...)
+}
+
+// Fatalf fatalf
+func Fatalf(format string, v ...interface{}) {
+	DefaultLogger.Fatalf(format, v...)
+}
+
 // SetLogger sets the local logger
 func SetLogger(l Logger) {
 	DefaultLogger = l

@@ -3,9 +3,8 @@ package main
 import (
 	"os"
 
-	"github.com/fananchong/v-micro/common/log"
-
 	micro "github.com/fananchong/v-micro"
+	"github.com/fananchong/v-micro/common/log"
 	"github.com/micro/cli"
 )
 

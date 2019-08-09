@@ -16,6 +16,12 @@ else if %CMD%=="race" (
 )^
 else if %CMD%=="test" (
     go test -v ./...
+)^
+else if %CMD%=="start" (
+    cd %GOBIN%
+    start server.exe --server_id=1 --log_to_stdout=true
+    start server.exe --server_id=2 --log_to_stdout=true
+    start server.exe --server_id=3 --log_to_stdout=true
 )
 
 
