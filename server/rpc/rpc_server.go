@@ -23,7 +23,8 @@ import (
 
 type rpcServer struct {
 	router     *router
-	exit       chan int
+	exit       chan chan error
+	exitAccept chan int
 	opts       server.Options
 	registered int64
 	ts         transport.Listener
@@ -35,9 +36,10 @@ func newRPCServer(opts ...server.Option) server.Server {
 	router.hdlrWrappers = options.HdlrWrappers
 
 	return &rpcServer{
-		opts:   options,
-		router: router,
-		exit:   make(chan int),
+		opts:       options,
+		router:     router,
+		exit:       make(chan chan error),
+		exitAccept: make(chan int),
 	}
 }
 
@@ -94,12 +96,13 @@ func (s *rpcServer) Start() (err error) {
 	return nil
 }
 
-func (s *rpcServer) Stop() (err error) {
+func (s *rpcServer) Stop() error {
 	if s.ts != nil {
 		s.ts.Close()
 	}
-	s.exit <- 1
-	return
+	ch := make(chan error)
+	s.exit <- ch
+	return <-ch
 }
 
 func (s *rpcServer) String() string {
@@ -245,7 +248,7 @@ func (s *rpcServer) accept() {
 
 		select {
 		// check if we're supposed to exit
-		case <-s.exit:
+		case <-s.exitAccept:
 			return
 		// check the error and backoff
 		default:
@@ -255,7 +258,6 @@ func (s *rpcServer) accept() {
 				continue
 			}
 		}
-
 		// no error just exit
 		return
 	}
@@ -357,6 +359,8 @@ func (s *rpcServer) registerTTL() {
 	}
 
 	config := s.Options()
+
+	var ch chan error
 Loop:
 	for {
 		select {
@@ -374,16 +378,19 @@ Loop:
 				}
 			}
 		// wait for exit
-		case <-s.exit:
+		case ch = <-s.exit:
+			close(s.exitAccept)
 			t.Stop()
 			break Loop
 		}
 	}
 
 	// deregister self
-	if err := s.deregister(); err != nil {
+	var err error
+	if err = s.deregister(); err != nil {
 		log.Infof("Server %s-%s deregister error: %s", config.Name, config.ID, err)
 	}
+	ch <- err
 }
 
 func (s *rpcServer) newCodec(contentType string) (codec.NewCodec, error) {
