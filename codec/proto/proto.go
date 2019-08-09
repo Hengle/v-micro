@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 
 	"github.com/fananchong/v-micro/codec"
+	"github.com/fananchong/v-micro/common/log"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -23,6 +24,7 @@ func (c *codecImpl) ReadBody(b interface{}) error {
 	}
 	buf, err := ioutil.ReadAll(c.Conn)
 	if err != nil {
+		log.Error(err)
 		return err
 	}
 	return proto.Unmarshal(buf, b.(proto.Message))
@@ -35,6 +37,7 @@ func (c *codecImpl) Write(m *codec.Message, b interface{}) error {
 	}
 	buf, err := proto.Marshal(p)
 	if err != nil {
+		log.Error(err)
 		return err
 	}
 	_, err = c.Conn.Write(buf)

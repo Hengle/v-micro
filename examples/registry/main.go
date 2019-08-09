@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	micro "github.com/fananchong/v-micro"
 	"github.com/fananchong/v-micro/common/log"
 	"github.com/fananchong/v-micro/selector"
@@ -17,6 +19,8 @@ func test() (err error) {
 func main() {
 	service := micro.NewService(
 		micro.Name("greeter"),
+		micro.RegisterTTL(time.Second*30),
+		micro.RegisterInterval(time.Second*15),
 		micro.AfterStart(test),
 	)
 

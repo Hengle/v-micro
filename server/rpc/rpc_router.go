@@ -174,6 +174,7 @@ func (s *service) call(ctx context.Context, router *router, sending *sync.Mutex,
 
 		// The return value for the method is an error.
 		if err := returnValues[0].Interface(); err != nil {
+			log.Error(err)
 			return err.(error)
 		}
 
@@ -187,6 +188,7 @@ func (s *service) call(ctx context.Context, router *router, sending *sync.Mutex,
 
 	// execute handler
 	if err := fn(ctx, r, replyv.Interface()); err != nil {
+		log.Error(err)
 		return err
 	}
 
@@ -246,6 +248,7 @@ func (router *router) readRequest(r *rpcRequest) (service *service, mtype *metho
 
 	service, mtype, req, keepReading, err = router.readHeader(cc)
 	if err != nil {
+		log.Error(err)
 		if !keepReading {
 			return
 		}
@@ -264,6 +267,7 @@ func (router *router) readRequest(r *rpcRequest) (service *service, mtype *metho
 	}
 	// argv guaranteed to be a pointer now.
 	if err = cc.ReadBody(argv.Interface()); err != nil {
+		log.Error(err)
 		return
 	}
 	if argIsValue {
@@ -283,6 +287,7 @@ func (router *router) readHeader(cc codec.Reader) (service *service, mtype *meth
 
 	err = cc.ReadHeader(msg, msg.Type)
 	if err != nil {
+		log.Error(err)
 		req = nil
 		if err == io.EOF || err == io.ErrUnexpectedEOF {
 			return
@@ -366,6 +371,7 @@ func (router *router) ServeRequest(ctx context.Context, r *rpcRequest, rsp *rpcR
 	sending := new(sync.Mutex)
 	service, mtype, req, argv, replyv, keepReading, err := router.readRequest(r)
 	if err != nil {
+		log.Error(err)
 		if !keepReading {
 			return err
 		}

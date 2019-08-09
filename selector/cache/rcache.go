@@ -287,6 +287,7 @@ func (c *cache) run(service string) {
 		)
 
 		if err != nil {
+			log.Error(err)
 			if c.quit() {
 				return
 			}
@@ -309,6 +310,7 @@ func (c *cache) run(service string) {
 
 		// watch for events
 		if err := c.watch(w); err != nil {
+			log.Error(err)
 			if c.quit() {
 				return
 			}

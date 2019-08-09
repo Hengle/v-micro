@@ -33,6 +33,7 @@ func (socket *socketImpl) Recv(msg *transport.Message) error {
 func (socket *socketImpl) Send(msg *transport.Message) error {
 	data, err := marshal(msg)
 	if err != nil {
+		log.Error(err)
 		return err
 	}
 	if ok := socket.Session.Send(data, 0); !ok {

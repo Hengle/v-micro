@@ -334,6 +334,7 @@ func (s *rpcServer) serveConn(sock transport.Socket) {
 
 		// serve the actual request using the request router
 		if err := s.router.ServeRequest(ctx, request, response); err != nil {
+			log.Error(err)
 			// write an error response
 			err = rcodec.Write(&codec.Message{
 				Header: msg.Header,
