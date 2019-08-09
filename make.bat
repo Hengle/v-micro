@@ -19,9 +19,9 @@ else if %CMD%=="test" (
 )^
 else if %CMD%=="start" (
     cd %GOBIN%
-    start server.exe --server_id=1 --log_to_stdout=true
-    start server.exe --server_id=2 --log_to_stdout=true
-    start server.exe --server_id=3 --log_to_stdout=true
+    start registry.exe --server_id=1 --log_to_stdout=true
+    start registry.exe --server_id=2 --log_to_stdout=true
+    start registry.exe --server_id=3 --log_to_stdout=true
 )
 
 

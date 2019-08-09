@@ -106,8 +106,7 @@ func (c *cache) get(service string) ([]*registry.Service, error) {
 			log.Error(err)
 			return nil, err
 		}
-
-		for _, s := range services {
+		for _, s := range registryCopy(services) {
 			c.update(&registry.Result{Action: "update", Service: s})
 		}
 
@@ -161,9 +160,23 @@ LABEL:
 		if service == nil {
 			c.set(res.Service.Name, append(services, res.Service))
 			for _, cur := range res.Service.Nodes {
-				log.Infof("service [%s-%s] register", service.Name, cur.ID)
+				log.Infof("service [%s] register", cur.ID)
 			}
 			return
+		}
+
+		// log
+		for _, node := range res.Service.Nodes {
+			var seen bool
+			for _, cur := range service.Nodes {
+				if cur.ID == node.ID {
+					seen = true
+					break
+				}
+			}
+			if !seen {
+				log.Infof("service [%s] register", node.ID)
+			}
 		}
 
 		// append old nodes to new service
@@ -177,7 +190,6 @@ LABEL:
 			}
 			if !seen {
 				res.Service.Nodes = append(res.Service.Nodes, cur)
-				log.Infof("service [%s-%s] register", service.Name, cur.ID)
 			}
 		}
 
@@ -202,7 +214,7 @@ LABEL:
 			if !seen {
 				nodes = append(nodes, cur)
 			} else {
-				log.Infof("service [%s-%s] deregister", service.Name, cur.ID)
+				log.Infof("service [%s] deregister", cur.ID)
 			}
 		}
 
