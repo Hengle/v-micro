@@ -192,7 +192,14 @@ func newCmd(opts ...Option) Cmd {
 		log.DefaultLogger = DefaultLogs[defaultLog]()
 	}
 	if registry.DefaultRegistry == nil {
-		registry.DefaultRegistry = DefaultRegistries[defaultRegistry]()
+		if defaultRegistry == "mdns" {
+			// 不少产品也会用 5353 端口做 mdns 服务发现，比如 jenkins 。
+			// 改成其他端口，避免发现其他 APP 服务，又协议解析失败，造成死循环 BUG
+			opt := []registry.Option{mdns.Port(5354)}
+			registry.DefaultRegistry = DefaultRegistries[defaultRegistry](opt...)
+		} else {
+			registry.DefaultRegistry = DefaultRegistries[defaultRegistry]()
+		}
 	}
 	if selector.DefaultSelector == nil {
 		selector.DefaultSelector = DefaultSelectors[defaultSelector]()

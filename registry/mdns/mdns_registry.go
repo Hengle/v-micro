@@ -40,10 +40,16 @@ func newRegistry(opts ...registry.Option) registry.Registry {
 		Timeout: time.Millisecond * 100,
 	}
 
-	return &mdnsRegistry{
+	registry := &mdnsRegistry{
 		opts:     options,
 		services: make(map[string][]*mdnsEntry),
 	}
+
+	for _, o := range opts {
+		o(&registry.opts)
+	}
+
+	return registry
 }
 
 func (m *mdnsRegistry) Init(opts ...registry.Option) error {
@@ -60,7 +66,12 @@ func (m *mdnsRegistry) Options() registry.Options {
 func (m *mdnsRegistry) Register(service *registry.Service, opts ...registry.RegisterOption) error {
 	m.Lock()
 	defer m.Unlock()
-
+	var mdnsPort int
+	if m.opts.Context != nil {
+		if v, ok := m.opts.Context.Value(portType{}).(int); ok {
+			mdnsPort = v
+		}
+	}
 	entries, ok := m.services[service.Name]
 	// first entry, create wildcard used for list queries
 	if !ok {
@@ -78,7 +89,7 @@ func (m *mdnsRegistry) Register(service *registry.Service, opts ...registry.Regi
 			return err
 		}
 
-		srv, err := mdns.NewServer(&mdns.Config{Zone: &mdns.DNSSDService{s}})
+		srv, err := mdns.NewServer(&mdns.Config{Zone: &mdns.DNSSDService{s}, Port: mdnsPort})
 		if err != nil {
 			log.Error(err)
 			return err
@@ -158,7 +169,7 @@ func (m *mdnsRegistry) Register(service *registry.Service, opts ...registry.Regi
 			continue
 		}
 
-		srv, err := mdns.NewServer(&mdns.Config{Zone: s})
+		srv, err := mdns.NewServer(&mdns.Config{Zone: s, Port: mdnsPort})
 		if err != nil {
 			log.Error(err)
 			gerr = err
