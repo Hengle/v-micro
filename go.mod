@@ -15,4 +15,4 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 )
 
-replace github.com/micro/mdns => github.com/fananchong/mdns v0.2.1-0.20190812033724-1a40cbd1c149
+replace github.com/micro/mdns => github.com/fananchong/mdns v0.2.1-0.20190812080205-b6a219329c78
