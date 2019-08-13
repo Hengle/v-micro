@@ -11,16 +11,17 @@ import (
 
 // Options options
 type Options struct {
-	Codecs       map[string]codec.NewCodec
-	Registry     registry.Registry
-	Transport    transport.Transport
-	Metadata     map[string]string
-	Name         string
-	Address      string
-	Advertise    string
-	ID           string
-	Version      string
-	HdlrWrappers []HandlerWrapper
+	Codecs          map[string]codec.NewCodec
+	Registry        registry.Registry
+	Transport       transport.Transport
+	Metadata        map[string]string
+	Name            string
+	Address         string
+	Advertise       string
+	PrivateIPBlocks string
+	ID              string
+	Version         string
+	HdlrWrappers    []HandlerWrapper
 
 	// RegisterCheck runs a check function before registering the service
 	RegisterCheck func(context.Context) error
@@ -69,6 +70,14 @@ func Address(a string) Option {
 func Advertise(a string) Option {
 	return func(o *Options) {
 		o.Advertise = a
+	}
+}
+
+// PrivateIPBlocks When Advertise is "0.0.0.0", "[::]", "::", the network segment in PrivateIPBlocks is preferentially matched.
+// PrivateIPBlocks default value is 192.168.0.0/16. Separator is a comma (,)
+func PrivateIPBlocks(blocks string) Option {
+	return func(o *Options) {
+		o.PrivateIPBlocks = blocks
 	}
 }
 

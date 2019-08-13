@@ -3,16 +3,13 @@ package rpc
 import (
 	"context"
 	"fmt"
-	"net"
 	"runtime/debug"
-	"strings"
 	"sync/atomic"
 	"time"
 
 	"github.com/fananchong/v-micro/codec"
 	"github.com/fananchong/v-micro/common/log"
 	"github.com/fananchong/v-micro/common/metadata"
-	"github.com/fananchong/v-micro/internal/addr"
 	hcodec "github.com/fananchong/v-micro/internal/codec"
 	mnet "github.com/fananchong/v-micro/internal/net"
 	"github.com/fananchong/v-micro/registry"
@@ -110,32 +107,9 @@ func (s *rpcServer) String() string {
 }
 
 func (s *rpcServer) register() (err error) {
-	var advt, host, port string
-
 	// parse address for host, port
 	config := s.Options()
-
-	// check the advertise address first
-	// if it exists then use it, otherwise
-	// use the address
-	if len(config.Advertise) > 0 {
-		advt = config.Advertise
-	} else {
-		advt = config.Address
-	}
-
-	if cnt := strings.Count(advt, ":"); cnt >= 1 {
-		// ipv6 address in format [host]:port or ipv4 host:port
-		host, port, err = net.SplitHostPort(advt)
-		if err != nil {
-			log.Error(err)
-			return err
-		}
-	} else {
-		host = advt
-	}
-
-	addr, err := addr.Extract(host)
+	addr, port, err := common.ExtractAdvertiseIP(config)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -186,31 +160,8 @@ func (s *rpcServer) register() (err error) {
 }
 
 func (s *rpcServer) deregister() (err error) {
-	var advt, host, port string
-
 	config := s.Options()
-
-	// check the advertise address first
-	// if it exists then use it, otherwise
-	// use the address
-	if len(config.Advertise) > 0 {
-		advt = config.Advertise
-	} else {
-		advt = config.Address
-	}
-
-	if cnt := strings.Count(advt, ":"); cnt >= 1 {
-		// ipv6 address in format [host]:port or ipv4 host:port
-		host, port, err = net.SplitHostPort(advt)
-		if err != nil {
-			log.Error(err)
-			return err
-		}
-	} else {
-		host = advt
-	}
-
-	addr, err := addr.Extract(host)
+	addr, port, err := common.ExtractAdvertiseIP(config)
 	if err != nil {
 		log.Error(err)
 		return err

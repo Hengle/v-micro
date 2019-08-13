@@ -19,7 +19,7 @@ func TestExtractor(t *testing.T) {
 	}
 
 	for _, d := range testData {
-		addr, err := Extract(d.addr)
+		addr, err := Extract(d.addr, "192.168.0.0/16")
 		if err != nil {
 			t.Errorf("Unexpected error %v", err)
 		}

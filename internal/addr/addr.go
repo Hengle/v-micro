@@ -3,21 +3,10 @@ package addr
 import (
 	"fmt"
 	"net"
+	"strings"
 )
 
-var (
-	privateBlocks []*net.IPNet
-)
-
-func init() {
-	for _, b := range []string{"10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "100.64.0.0/10", "fd00::/8"} {
-		if _, block, err := net.ParseCIDR(b); err == nil {
-			privateBlocks = append(privateBlocks, block)
-		}
-	}
-}
-
-func isPrivateIP(ipAddr string) bool {
+func isPrivateIP(ipAddr string, privateBlocks []*net.IPNet) bool {
 	ip := net.ParseIP(ipAddr)
 	for _, priv := range privateBlocks {
 		if priv.Contains(ip) {
@@ -28,7 +17,7 @@ func isPrivateIP(ipAddr string) bool {
 }
 
 // Extract returns a real ip
-func Extract(addr string) (string, error) {
+func Extract(addr string, ipBlocks string) (string, error) {
 	// if addr specified then its returned
 	if len(addr) > 0 && (addr != "0.0.0.0" && addr != "[::]" && addr != "::") {
 		return addr, nil
@@ -49,6 +38,13 @@ func Extract(addr string) (string, error) {
 		addrs = append(addrs, ifaceAddrs...)
 	}
 
+	var privateBlocks []*net.IPNet
+	for _, b := range strings.Split(ipBlocks, ",") {
+		if _, block, err := net.ParseCIDR(b); err == nil {
+			privateBlocks = append(privateBlocks, block)
+		}
+	}
+
 	var ipAddr []byte
 	var publicIP []byte
 
@@ -63,7 +59,7 @@ func Extract(addr string) (string, error) {
 			continue
 		}
 
-		if !isPrivateIP(ip.String()) {
+		if !isPrivateIP(ip.String(), privateBlocks) {
 			publicIP = ip
 			continue
 		}
