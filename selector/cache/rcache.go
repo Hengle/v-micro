@@ -160,7 +160,7 @@ LABEL:
 		if service == nil {
 			c.set(res.Service.Name, append(services, res.Service))
 			for _, cur := range res.Service.Nodes {
-				log.Infof("service [%s] register, node: %v", cur.ID, cur)
+				log.Infof("service register, node: %v", cur)
 			}
 			return
 		}
@@ -175,7 +175,7 @@ LABEL:
 				}
 			}
 			if !seen {
-				log.Infof("service [%s] register, node: %v", node.ID, node)
+				log.Infof("service register, node: %v", node)
 			}
 		}
 
@@ -214,7 +214,7 @@ LABEL:
 			if !seen {
 				nodes = append(nodes, cur)
 			} else {
-				log.Infof("service [%s] deregister", cur.ID)
+				log.Infof("service deregister, node: %s", cur.ID)
 			}
 		}
 

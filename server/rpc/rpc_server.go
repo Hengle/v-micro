@@ -28,16 +28,18 @@ type rpcServer struct {
 }
 
 func newRPCServer(opts ...server.Option) server.Server {
-	options := common.NewOptions(opts...)
-	router := newRPCRouter()
-	router.hdlrWrappers = options.HdlrWrappers
-
-	return &rpcServer{
-		opts:       options,
-		router:     router,
+	s := &rpcServer{
+		opts: server.Options{
+			Codecs:   make(map[string]codec.NewCodec),
+			Metadata: map[string]string{},
+		},
+		router:     newRPCRouter(),
 		exit:       make(chan chan error),
 		exitAccept: make(chan int),
 	}
+	common.InitOptions(&s.opts, opts...)
+	s.router.hdlrWrappers = s.opts.HdlrWrappers
+	return s
 }
 
 func (s *rpcServer) Options() server.Options {
@@ -46,9 +48,7 @@ func (s *rpcServer) Options() server.Options {
 }
 
 func (s *rpcServer) Init(opts ...server.Option) error {
-	for _, opt := range opts {
-		opt(&s.opts)
-	}
+	common.InitOptions(&s.opts, opts...)
 	r := newRPCRouter()
 	r.hdlrWrappers = s.opts.HdlrWrappers
 	r.serviceMap = s.router.serviceMap

@@ -24,8 +24,6 @@ type Request interface {
 	Service() string
 	// The action to take
 	Method() string
-	// The endpoint to invoke
-	Endpoint() string
 	// The content type
 	ContentType() string
 	// The unencoded request body
