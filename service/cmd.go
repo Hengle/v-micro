@@ -54,12 +54,6 @@ var (
 			Usage:  "Client for v-micro; rpc",
 		},
 		cli.IntFlag{
-			Name:   "client_retries",
-			EnvVar: "MICRO_CLIENT_RETRIES",
-			Value:  client.DefaultRetries,
-			Usage:  "Sets the client retries. Default: 1",
-		},
-		cli.IntFlag{
 			Name:   "register_ttl",
 			EnvVar: "MICRO_REGISTER_TTL",
 			Usage:  "Register TTL in seconds",
@@ -412,11 +406,6 @@ func (c *cmd) Before(ctx *cli.Context) error {
 
 	if val := time.Duration(ctx.GlobalInt("register_interval")); val > 0 {
 		serverOpts = append(serverOpts, server.RegisterInterval(val*time.Second))
-	}
-
-	// client opts
-	if r := ctx.Int("client_retries"); r >= 0 {
-		clientOpts = append(clientOpts, client.Retries(r))
 	}
 
 	if level := ctx.Int("log_level"); level >= 0 {

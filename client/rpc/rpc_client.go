@@ -23,11 +23,6 @@ func newRPCClient(opt ...client.Option) client.Client {
 		once: sync.Once{},
 		opts: client.Options{
 			Codecs: make(map[string]codec.NewCodec),
-			CallOptions: client.CallOptions{
-				Backoff: client.DefaultBackoff,
-				Retry:   client.DefaultRetry,
-				Retries: client.DefaultRetries,
-			},
 		},
 	}
 

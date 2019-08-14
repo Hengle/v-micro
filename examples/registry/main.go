@@ -11,7 +11,7 @@ var service micro.Service
 
 func test() (err error) {
 	slt := service.Client().Options().Selector
-	if _, err = slt.Select("greeter"); err != nil {
+	if _, err = slt.Select("reg"); err != nil {
 		log.Fatal(err)
 	}
 	return
@@ -19,7 +19,7 @@ func test() (err error) {
 
 func main() {
 	service = micro.NewService(
-		micro.Name("greeter"),
+		micro.Name("reg"),
 		micro.RegisterTTL(time.Second*30),
 		micro.RegisterInterval(time.Second*15),
 		micro.AfterStart(test),

@@ -35,13 +35,6 @@ type Options struct {
 type CallOptions struct {
 	SelectOptions []selector.SelectOption
 
-	// Backoff func
-	Backoff BackoffFunc
-	// Check if retriable func
-	Retry RetryFunc
-	// Number of Call attempts
-	Retries int
-
 	// Middleware for low level call func
 	CallWrappers []CallWrapper
 
@@ -105,29 +98,6 @@ func WrapCall(cw ...CallWrapper) Option {
 	}
 }
 
-// Backoff is used to set the backoff function used
-// when retrying Calls
-func Backoff(fn BackoffFunc) Option {
-	return func(o *Options) {
-		o.CallOptions.Backoff = fn
-	}
-}
-
-// Retries Number of retries when making the request.
-// Should this be a Call Option?
-func Retries(i int) Option {
-	return func(o *Options) {
-		o.CallOptions.Retries = i
-	}
-}
-
-// Retry sets the retry function to be used when re-trying.
-func Retry(fn RetryFunc) Option {
-	return func(o *Options) {
-		o.CallOptions.Retry = fn
-	}
-}
-
 // Call Options
 
 // WithSelectOption select option
@@ -141,29 +111,5 @@ func WithSelectOption(so ...selector.SelectOption) CallOption {
 func WithCallWrapper(cw ...CallWrapper) CallOption {
 	return func(o *CallOptions) {
 		o.CallWrappers = append(o.CallWrappers, cw...)
-	}
-}
-
-// WithBackoff is a CallOption which overrides that which
-// set in Options.CallOptions
-func WithBackoff(fn BackoffFunc) CallOption {
-	return func(o *CallOptions) {
-		o.Backoff = fn
-	}
-}
-
-// WithRetry is a CallOption which overrides that which
-// set in Options.CallOptions
-func WithRetry(fn RetryFunc) CallOption {
-	return func(o *CallOptions) {
-		o.Retry = fn
-	}
-}
-
-// WithRetries is a CallOption which overrides that which
-// set in Options.CallOptions
-func WithRetries(i int) CallOption {
-	return func(o *CallOptions) {
-		o.Retries = i
 	}
 }
