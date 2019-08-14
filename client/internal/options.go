@@ -2,42 +2,31 @@ package common
 
 import (
 	"github.com/fananchong/v-micro/client"
-	"github.com/fananchong/v-micro/codec"
-	"github.com/fananchong/v-micro/registry"
-	"github.com/fananchong/v-micro/selector"
-	"github.com/fananchong/v-micro/transport"
+	"github.com/fananchong/v-micro/common/log"
 )
 
-// NewOptions new
-func NewOptions(options ...client.Option) client.Options {
-	opts := client.Options{
-		Codecs: make(map[string]codec.NewCodec),
-		CallOptions: client.CallOptions{
-			Backoff: client.DefaultBackoff,
-			Retry:   client.DefaultRetry,
-			Retries: client.DefaultRetries,
-		},
-	}
+// defaultContentType default content type
+var defaultContentType = "application/protobuf"
 
+// InitOptions new
+func InitOptions(opts *client.Options, options ...client.Option) {
 	for _, o := range options {
-		o(&opts)
-	}
-
-	if len(opts.ContentType) == 0 {
-		opts.ContentType = client.DefaultContentType
+		o(opts)
 	}
 
 	if opts.Registry == nil {
-		opts.Registry = registry.DefaultRegistry
-	}
-
-	if opts.Selector == nil {
-		opts.Selector = selector.DefaultSelector
+		log.Fatal("Init fail. Registry is nil.")
 	}
 
 	if opts.Transport == nil {
-		opts.Transport = transport.DefaultTransport
+		log.Fatal("Init fail. Transport is nil.")
 	}
 
-	return opts
+	if opts.Selector == nil {
+		log.Fatal("Init fail. Selector is nil.")
+	}
+
+	if len(opts.ContentType) == 0 {
+		opts.ContentType = defaultContentType
+	}
 }

@@ -19,18 +19,25 @@ type rpcClient struct {
 }
 
 func newRPCClient(opt ...client.Option) client.Client {
-	opts := common.NewOptions(opt...)
-
 	rc := &rpcClient{
 		once: sync.Once{},
-		opts: opts,
+		opts: client.Options{
+			Codecs: make(map[string]codec.NewCodec),
+			CallOptions: client.CallOptions{
+				Backoff: client.DefaultBackoff,
+				Retry:   client.DefaultRetry,
+				Retries: client.DefaultRetries,
+			},
+		},
 	}
+
+	common.InitOptions(&rc.opts, opt...)
 
 	c := client.Client(rc)
 
 	// wrap in reverse
-	for i := len(opts.Wrappers); i > 0; i-- {
-		c = opts.Wrappers[i-1](c)
+	for i := len(rc.opts.Wrappers); i > 0; i-- {
+		c = rc.opts.Wrappers[i-1](c)
 	}
 
 	return c

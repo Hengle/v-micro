@@ -250,8 +250,8 @@ func (s *rpcServer) serveConn(sock transport.Socket) {
 		ct := msg.Header["Content-Type"]
 		// no content type
 		if len(ct) == 0 {
-			msg.Header["Content-Type"] = DefaultContentType
-			ct = DefaultContentType
+			msg.Header["Content-Type"] = defaultContentType
+			ct = defaultContentType
 		}
 		var cf codec.NewCodec
 		var err error

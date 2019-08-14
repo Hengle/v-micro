@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/fananchong/v-micro/common/log"
-	"github.com/fananchong/v-micro/registry"
 	"github.com/fananchong/v-micro/selector"
 )
 
@@ -91,7 +90,7 @@ func NewSelector(opts ...selector.Option) selector.Selector {
 	}
 
 	if sopts.Registry == nil {
-		sopts.Registry = registry.DefaultRegistry
+		log.Fatal("Init fail. Registry is nil.")
 	}
 
 	s := &registrySelector{

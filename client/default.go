@@ -13,8 +13,6 @@ var (
 	DefaultRetry = RetryAlways
 	// DefaultRetries is the default number of times a request is tried
 	DefaultRetries = 1
-	// DefaultContentType default content type
-	DefaultContentType = "application/protobuf"
 )
 
 // Call Makes a asynchronous call to a service using the default client

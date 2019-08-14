@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	// DefaultContentType default content type
-	DefaultContentType = "application/protobuf"
+	// defaultContentType default content type
+	defaultContentType = "application/protobuf"
 
 	// DefaultCodecs default codecs
 	DefaultCodecs = map[string]codec.NewCodec{

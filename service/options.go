@@ -15,6 +15,7 @@ import (
 // Options options
 type Options struct {
 	// For the Command Line itself
+	ID          string
 	Name        string
 	Description string
 	Version     string
@@ -45,6 +46,13 @@ type Options struct {
 
 // Option option
 type Option func(o *Options)
+
+// ID app ID
+func ID(id string) Option {
+	return func(o *Options) {
+		o.ID = id
+	}
+}
 
 // Name Command line Name
 func Name(n string) Option {

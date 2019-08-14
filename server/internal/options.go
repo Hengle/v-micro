@@ -1,9 +1,11 @@
 package common
 
 import (
-	"github.com/fananchong/v-micro/registry"
+	"context"
+
+	"github.com/fananchong/v-micro/common/log"
 	"github.com/fananchong/v-micro/server"
-	"github.com/fananchong/v-micro/transport"
+	"github.com/google/uuid"
 )
 
 // InitOptions server 插件都要初始化 options ，因此把它拎出来，放这里
@@ -13,44 +15,30 @@ func InitOptions(opts *server.Options, opt ...server.Option) {
 	}
 
 	if opts.Registry == nil {
-		opts.Registry = registry.DefaultRegistry
-	} else {
-		registry.DefaultRegistry = opts.Registry
+		log.Fatal("Init fail. Registry is nil.")
 	}
 
 	if opts.Transport == nil {
-		opts.Transport = transport.DefaultTransport
-	} else {
-		transport.DefaultTransport = opts.Transport
+		log.Fatal("Init fail. Transport is nil.")
 	}
 
 	if opts.RegisterCheck == nil {
-		opts.RegisterCheck = server.DefaultRegisterCheck
-	} else {
-		server.DefaultRegisterCheck = opts.RegisterCheck
+		opts.RegisterCheck = func(context.Context) error { return nil }
 	}
 
 	if len(opts.Address) == 0 {
-		opts.Address = server.DefaultAddress
-	} else {
-		server.DefaultAddress = opts.Address
+		opts.Address = ":0"
 	}
 
 	if len(opts.Name) == 0 {
-		opts.Name = server.DefaultName
-	} else {
-		server.DefaultName = opts.Name
+		opts.Name = "server"
 	}
 
 	if len(opts.ID) == 0 {
-		opts.ID = server.DefaultID
-	} else {
-		server.DefaultID = opts.ID
+		opts.ID = uuid.New().String()
 	}
 
 	if len(opts.Version) == 0 {
-		opts.Version = server.DefaultVersion
-	} else {
-		server.DefaultVersion = opts.Version
+		opts.Version = "latest"
 	}
 }

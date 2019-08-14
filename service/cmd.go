@@ -40,8 +40,6 @@ type cmd struct {
 }
 
 var (
-	// DefaultCmd default cmd
-	DefaultCmd = newCmd()
 
 	// DefaultFlags default flags
 	DefaultFlags = []cli.Flag{
@@ -187,40 +185,67 @@ func init() {
 	}
 }
 
-func newCmd(opts ...Option) Cmd {
-	if log.DefaultLogger == nil {
-		log.DefaultLogger = DefaultLogs[defaultLog]()
-	}
-	if registry.DefaultRegistry == nil {
-		if defaultRegistry == "mdns" {
-			// 不少产品也会用 5353 端口做 mdns 服务发现，比如 jenkins 。
-			// 改成其他端口，避免发现其他 APP 服务，又协议解析失败，造成死循环 BUG
-			opt := []registry.Option{mdns.Port(5354)}
-			registry.DefaultRegistry = DefaultRegistries[defaultRegistry](opt...)
-		} else {
-			registry.DefaultRegistry = DefaultRegistries[defaultRegistry]()
-		}
-	}
-	if selector.DefaultSelector == nil {
-		selector.DefaultSelector = DefaultSelectors[defaultSelector]()
-	}
-	if transport.DefaultTransport == nil {
-		transport.DefaultTransport = DefaultTransports[defaultTransport]()
-	}
-	if client.DefaultClient == nil {
-		client.DefaultClient = DefaultClients[defaultClient]()
-	}
-	if server.DefaultServer == nil {
-		server.DefaultServer = DefaultServers[defaultServer]()
-	}
-	options := Options{
-		Logger:    &log.DefaultLogger,
-		Client:    &client.DefaultClient,
-		Registry:  &registry.DefaultRegistry,
-		Server:    &server.DefaultServer,
-		Selector:  &selector.DefaultSelector,
-		Transport: &transport.DefaultTransport,
+func newLogger(name string) log.Logger {
+	log.DefaultLogger = DefaultLogs[name]()
+	return log.DefaultLogger
+}
 
+func newClient(name string, opt ...client.Option) client.Client {
+	cli := DefaultClients[name](opt...)
+	return cli
+}
+
+func newRegistry(name string) registry.Registry {
+	var r registry.Registry
+	if name == "mdns" {
+		// 不少产品也会用 5353 端口做 mdns 服务发现，比如 jenkins 。
+		// 改成其他端口，避免发现其他 APP 服务，又协议解析失败，造成死循环 BUG
+		opt := []registry.Option{mdns.Port(5354)}
+		r = DefaultRegistries[name](opt...)
+	} else {
+		r = DefaultRegistries[name]()
+	}
+	return r
+}
+
+func newServer(name string, opt ...server.Option) server.Server {
+	srv := DefaultServers[name](opt...)
+	return srv
+}
+
+func newSelector(name string, opt ...selector.Option) selector.Selector {
+	slt := DefaultSelectors[name](opt...)
+	return slt
+}
+
+func newTransport(name string) transport.Transport {
+	tran := DefaultTransports[name]()
+	return tran
+}
+
+func newCmd(opts ...Option) Cmd {
+	l := newLogger(defaultLog)
+	r := newRegistry(defaultRegistry)
+	tran := newTransport(defaultTransport)
+	slt := newSelector(defaultSelector, []selector.Option{
+		selector.Registry(r),
+	}...)
+	srv := newServer(defaultServer, []server.Option{
+		server.Registry(r),
+		server.Transport(tran),
+	}...)
+	c := newClient(defaultClient, []client.Option{
+		client.Registry(r),
+		client.Transport(tran),
+		client.Selector(slt),
+	}...)
+	options := Options{
+		Logger:     &l,
+		Client:     &c,
+		Registry:   &r,
+		Server:     &srv,
+		Selector:   &slt,
+		Transport:  &tran,
 		Loggers:    DefaultLogs,
 		Clients:    DefaultClients,
 		Registries: DefaultRegistries,
@@ -357,7 +382,7 @@ func (c *cmd) Before(ctx *cli.Context) error {
 			log.Fatalf("Error configuring registry: %v", err)
 		}
 	}
-	serverName := server.DefaultName
+	serverName := c.opts.Name
 	if len(ctx.String("server_name")) > 0 {
 		serverOpts = append(serverOpts, server.Name(ctx.String("server_name")))
 		serverName = ctx.String("server_name")
@@ -367,7 +392,7 @@ func (c *cmd) Before(ctx *cli.Context) error {
 		serverOpts = append(serverOpts, server.Version(ctx.String("server_version")))
 	}
 
-	serverID := server.DefaultID
+	serverID := c.opts.ID
 	if len(ctx.String("server_id")) > 0 {
 		serverOpts = append(serverOpts, server.ID(ctx.String("server_id")))
 		serverID = ctx.String("server_id")
@@ -447,21 +472,6 @@ func (c *cmd) Init(opts ...Option) error {
 	c.app.Action = c.opts.Action
 	c.app.RunAndExitOnError()
 	return nil
-}
-
-// DefaultOptions default options
-func DefaultOptions() Options {
-	return DefaultCmd.Options()
-}
-
-// App app
-func App() *cli.App {
-	return DefaultCmd.App()
-}
-
-// Init init
-func Init(opts ...Option) error {
-	return DefaultCmd.Init(opts...)
 }
 
 // NewCmd new

@@ -5,19 +5,20 @@ import (
 
 	micro "github.com/fananchong/v-micro"
 	"github.com/fananchong/v-micro/common/log"
-	"github.com/fananchong/v-micro/selector"
 )
 
+var service micro.Service
+
 func test() (err error) {
-	s := selector.DefaultSelector
-	if _, err = s.Select("greeter"); err != nil {
+	slt := service.Client().Options().Selector
+	if _, err = slt.Select("greeter"); err != nil {
 		log.Fatal(err)
 	}
 	return
 }
 
 func main() {
-	service := micro.NewService(
+	service = micro.NewService(
 		micro.Name("greeter"),
 		micro.RegisterTTL(time.Second*30),
 		micro.RegisterInterval(time.Second*15),

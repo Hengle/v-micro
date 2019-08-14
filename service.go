@@ -1,9 +1,9 @@
 package micro
 
 import (
+	"context"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	"github.com/fananchong/v-micro/client"
@@ -15,22 +15,32 @@ import (
 type service struct {
 	opts Options
 	cmd  cmd.Cmd
-	once sync.Once
 }
 
-func newService(opts ...Option) Service {
-	options := newOptions(opts...)
-
-	options.Client = &cmd.ClientWrapper{
-		options.Client,
-		metadata.Metadata{
-			"Micro-From-Service": options.Server.Options().Name,
-		},
+func newService(opt ...Option) Service {
+	// 1. Initialize the default plugin
+	c := cmd.NewCmd()
+	opts := Options{
+		Logger:    *c.Options().Logger,
+		Client:    *c.Options().Client,
+		Server:    *c.Options().Server,
+		Registry:  *c.Options().Registry,
+		Transport: *c.Options().Transport,
+		Action:    c.Options().Action,
+		Context:   context.Background(),
 	}
 
+	// 2. Replace the default plugin with options
+	for _, o := range opt {
+		o(&opts)
+	}
+
+	// 3. After instantiation, service.Init is called,
+	//    and the command line parameters are internally parsed
+	//    to dynamically replace the plugin.
 	return &service{
-		opts: options,
-		cmd:  cmd.DefaultCmd,
+		opts: opts,
+		cmd:  c,
 	}
 }
 
@@ -43,18 +53,28 @@ func (s *service) Init(opts ...Option) {
 		o(&s.opts)
 	}
 
-	s.once.Do(func() {
-		// Initialise the command flags, overriding new service
-		_ = s.cmd.Init(
-			cmd.Flags(s.opts.Flags...),
-			cmd.Action(s.opts.Action),
-			cmd.Logger(&s.opts.Logger),
-			cmd.Registry(&s.opts.Registry),
-			cmd.Transport(&s.opts.Transport),
-			cmd.Client(&s.opts.Client),
-			cmd.Server(&s.opts.Server),
-		)
-	})
+	// Initialise the command flags, overriding new service
+	_ = s.cmd.Init(
+		// The plugin can be replaced by an option in the code,
+		// so reassign it to ensure consistency
+		cmd.ID(s.opts.Server.Options().ID),
+		cmd.Name(s.opts.Server.Options().Name),
+		cmd.Version(s.opts.Server.Options().Version),
+		cmd.Flags(s.opts.Flags...),
+		cmd.Action(s.opts.Action),
+		cmd.Logger(&s.opts.Logger),
+		cmd.Registry(&s.opts.Registry),
+		cmd.Transport(&s.opts.Transport),
+		cmd.Client(&s.opts.Client),
+		cmd.Server(&s.opts.Server),
+	)
+
+	s.opts.Client = &cmd.ClientWrapper{
+		Client: s.opts.Client,
+		Headers: metadata.Metadata{
+			"Micro-From-Service": s.opts.Server.Options().Name,
+		},
+	}
 }
 
 func (s *service) Options() Options {

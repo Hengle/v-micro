@@ -39,24 +39,6 @@ type Options struct {
 // Option option
 type Option func(*Options)
 
-func newOptions(opts ...Option) Options {
-	opt := Options{
-		Logger:    log.DefaultLogger,
-		Client:    client.DefaultClient,
-		Server:    server.DefaultServer,
-		Registry:  registry.DefaultRegistry,
-		Transport: transport.DefaultTransport,
-		Action:    func(c *cli.Context) {},
-		Context:   context.Background(),
-	}
-
-	for _, o := range opts {
-		o(&opt)
-	}
-
-	return opt
-}
-
 // Logger logger
 func Logger(l log.Logger) Option {
 	return func(o *Options) {
