@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/fananchong/v-micro/client"
 	common "github.com/fananchong/v-micro/client/internal"
@@ -14,13 +13,11 @@ import (
 )
 
 type rpcClient struct {
-	once sync.Once
 	opts client.Options
 }
 
 func newRPCClient(opt ...client.Option) client.Client {
 	rc := &rpcClient{
-		once: sync.Once{},
 		opts: client.Options{
 			Codecs: make(map[string]codec.NewCodec),
 		},
@@ -53,10 +50,8 @@ func (r *rpcClient) call(ctx context.Context, node *registry.Node, req client.Re
 	return
 }
 
-func (r *rpcClient) Init(opts ...client.Option) error {
-	for _, o := range opts {
-		o(&r.opts)
-	}
+func (r *rpcClient) Init(opt ...client.Option) error {
+	common.InitOptions(&r.opts, opt...)
 	return nil
 }
 
@@ -74,12 +69,8 @@ func (r *rpcClient) next(request client.Request, opts client.CallOptions) (selec
 
 	// get next nodes from the selector
 	next, err := r.opts.Selector.Select(service, opts.SelectOptions...)
-	if err != nil && err == selector.ErrNotFound {
+	if err != nil {
 		err = fmt.Errorf("service %s: %v", service, err.Error())
-		log.Error(err)
-		return nil, err
-	} else if err != nil {
-		err = fmt.Errorf("error selecting %s node: %v", service, err.Error())
 		log.Error(err)
 		return nil, err
 	}
@@ -88,7 +79,47 @@ func (r *rpcClient) next(request client.Request, opts client.CallOptions) (selec
 }
 
 func (r *rpcClient) Call(ctx context.Context, request client.Request, opts ...client.CallOption) (err error) {
-	// TODO
+	// make a copy of call opts
+	callOpts := r.opts.CallOptions
+	for _, opt := range opts {
+		opt(&callOpts)
+	}
+
+	next, err := r.next(request, callOpts)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	// make copy of call method
+	rcall := r.call
+
+	// wrap the call in reverse
+	for i := len(callOpts.CallWrappers); i > 0; i-- {
+		rcall = callOpts.CallWrappers[i-1](rcall)
+	}
+
+	call := func() (error, bool) {
+		// select next node
+		node, err := next()
+		service := request.Service()
+		if err != nil {
+			return fmt.Errorf("service %s: %s", service, err.Error()), false
+		}
+		// make the call
+		err = rcall(ctx, node, request, callOpts)
+		return err, true
+	}
+
+	var try bool
+	for {
+		if err, try = call(); err != nil && try {
+			log.Errorf("call fail and try again, err:%s", err.Error())
+			continue
+		} else {
+			break
+		}
+	}
 	return
 }
 

@@ -32,8 +32,6 @@ type Filter func([]*registry.Service) []*registry.Service
 type Strategy func([]*registry.Service) Next
 
 var (
-	// ErrNotFound not found
-	ErrNotFound = errors.New("not found")
 	// ErrNoneAvailable  none available
 	ErrNoneAvailable = errors.New("none available")
 )

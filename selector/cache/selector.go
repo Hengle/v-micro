@@ -82,7 +82,7 @@ func (c *registrySelector) String() string {
 // NewSelector new
 func NewSelector(opts ...selector.Option) selector.Selector {
 	sopts := selector.Options{
-		Strategy: selector.Random,
+		Strategy: selector.StatefulRandom,
 	}
 
 	for _, opt := range opts {

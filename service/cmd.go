@@ -192,8 +192,9 @@ func newClient(name string, opt ...client.Option) client.Client {
 func newRegistry(name string) registry.Registry {
 	var r registry.Registry
 	if name == "mdns" {
-		// 不少产品也会用 5353 端口做 mdns 服务发现，比如 jenkins 。
-		// 改成其他端口，避免发现其他 APP 服务，又协议解析失败，造成死循环 BUG
+		// Many products will also use the 5353 port for mdns service discovery, such as jenkins.
+		// Change to other ports, to avoid 'discovering other APP services,
+		// and protocol parsing failed, resulting in an infinite loop BUG'
 		opt := []registry.Option{mdns.Port(5354)}
 		r = DefaultRegistries[name](opt...)
 	} else {
