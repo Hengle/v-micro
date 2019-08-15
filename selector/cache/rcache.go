@@ -25,16 +25,15 @@ type cache struct {
 
 	// registry cache
 	sync.RWMutex
-	cache   map[string][]*registry.Service
-	ttls    map[string]time.Time
-	watched map[string]bool
+	cache  map[string][]*registry.Service
+	inited sync.Map
 
 	exit chan bool
 }
 
 var (
 	// DefaultTTL default ttl
-	DefaultTTL = time.Minute
+	DefaultTTL = 30 * time.Second
 )
 
 func backoff(attempts int) time.Duration {
@@ -42,27 +41,6 @@ func backoff(attempts int) time.Duration {
 		return time.Duration(0)
 	}
 	return time.Duration(math.Pow(10, float64(attempts))) * time.Millisecond
-}
-
-// isValid checks if the service is valid
-func (c *cache) isValid(services []*registry.Service, ttl time.Time) bool {
-	// no services exist
-	if len(services) == 0 {
-		return false
-	}
-
-	// ttl is invalid
-	if ttl.IsZero() {
-		return false
-	}
-
-	// time since ttl is longer than timeout
-	if time.Since(ttl) > c.opts.TTL {
-		return false
-	}
-
-	// ok
-	return true
 }
 
 func (c *cache) quit() bool {
@@ -76,67 +54,109 @@ func (c *cache) quit() bool {
 
 func (c *cache) del(service string) {
 	delete(c.cache, service)
-	delete(c.ttls, service)
 }
 
-func (c *cache) get(service string) ([]*registry.Service, error) {
+func (c *cache) get(service string) (services []*registry.Service, err error) {
+	// watch service if not watched
+	if _, ok := c.inited.LoadOrStore(service, 1); !ok {
+		log.Infof("watch service: %s", service)
+		// ask the registry
+		if services, err = c.Registry.GetService(service); err != nil {
+			log.Error(err)
+			return
+		}
+		for _, s := range services {
+			c.update(&registry.Result{Action: "create", Service: s}, false)
+		}
+
+		go c.run(service)
+		go c.updateCache(service)
+	}
+
 	// read lock
 	c.RLock()
+	defer c.RUnlock()
 
 	// check the cache first
-	services := c.cache[service]
-	// get cache ttl
-	ttl := c.ttls[service]
+	services = c.cache[service]
 
-	// got services && within ttl so return cache
-	if c.isValid(services, ttl) {
-		// make a copy
-		cp := registryCopy(services)
-		// unlock the read
-		c.RUnlock()
-		// return servics
-		return cp, nil
-	}
+	// make a copy
+	return registryCopy(services), nil
+}
 
-	// get does the actual request for a service and cache it
-	get := func(service string) ([]*registry.Service, error) {
-		// ask the registry
-		services, err := c.Registry.GetService(service)
-		if err != nil {
-			log.Error(err)
-			return nil, err
-		}
-		for _, s := range registryCopy(services) {
-			c.update(&registry.Result{Action: "update", Service: s})
+func (c *cache) updateCache(service string) {
+	for {
+		// exit early if already dead
+		if c.quit() {
+			return
 		}
 
-		return services, nil
+		select {
+		case <-time.After(DefaultTTL):
+			// ask the registry
+			newservices, err := c.Registry.GetService(service)
+			if err != nil {
+				log.Error(err)
+				continue
+			}
+
+			func() {
+				c.Lock()
+				defer c.Unlock()
+
+				// delete invaild node
+				c.deleteOldNode(service, newservices)
+
+				// update vaild node
+				for _, s := range newservices {
+					c.update(&registry.Result{Action: "update", Service: s}, false)
+				}
+			}()
+		}
 	}
+}
 
-	// watch service if not watched
-	if _, ok := c.watched[service]; !ok {
-		go c.run(service)
+func (c *cache) deleteOldNode(service string, newservices []*registry.Service) {
+	// find invaild node, delete it
+	oldservices := registryCopy(c.cache[service])
+	for _, oldservice := range oldservices {
+		// find same version
+		var newservice *registry.Service
+		for _, service := range newservices {
+			if service.Version == oldservice.Version {
+				newservice = service
+				break
+			}
+		}
+		if newservice != nil {
+			// delete vaild node
+			for i := len(oldservice.Nodes) - 1; i >= 0; i-- {
+				old := oldservice.Nodes[i]
+				for _, new := range newservice.Nodes {
+					if old.ID == new.ID {
+						oldservice.Nodes = append(oldservice.Nodes[:i], oldservice.Nodes[i+1:]...)
+						break
+					}
+				}
+			}
+		}
+		c.update(&registry.Result{Action: "delete", Service: oldservice}, false)
 	}
-
-	// unlock the read lock
-	c.RUnlock()
-
-	// get and return services
-	return get(service)
 }
 
 func (c *cache) set(service string, services []*registry.Service) {
 	c.cache[service] = services
-	c.ttls[service] = time.Now().Add(c.opts.TTL)
 }
 
-func (c *cache) update(res *registry.Result) {
+func (c *cache) update(res *registry.Result, lock bool) {
 	if res == nil || res.Service == nil {
 		return
 	}
 
-	c.Lock()
-	defer c.Unlock()
+	if lock {
+		c.Lock()
+		defer c.Unlock()
+	}
 
 LABEL:
 	services, ok := c.cache[res.Service.Name]
@@ -252,22 +272,6 @@ LABEL:
 // run starts the cache watcher loop
 // it creates a new watcher if there's a problem
 func (c *cache) run(service string) {
-	// set watcher
-	c.Lock()
-	if _, ok := c.watched[service]; !ok {
-		c.watched[service] = true
-		c.Unlock()
-	} else {
-		c.Unlock()
-		return
-	}
-
-	// delete watcher on exit
-	defer func() {
-		c.Lock()
-		delete(c.watched, service)
-		c.Unlock()
-	}()
 
 	var a, b int
 
@@ -360,7 +364,7 @@ func (c *cache) watch(w registry.Watcher) error {
 			close(stop)
 			return err
 		}
-		c.update(res)
+		c.update(res, true)
 	}
 }
 
@@ -408,9 +412,7 @@ func New(r registry.Registry, opts ...Option) Cache {
 	return &cache{
 		Registry: r,
 		opts:     options,
-		watched:  make(map[string]bool),
 		cache:    make(map[string][]*registry.Service),
-		ttls:     make(map[string]time.Time),
 		exit:     make(chan bool),
 	}
 }

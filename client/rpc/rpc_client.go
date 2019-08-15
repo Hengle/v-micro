@@ -8,8 +8,10 @@ import (
 	common "github.com/fananchong/v-micro/client/internal"
 	"github.com/fananchong/v-micro/codec"
 	"github.com/fananchong/v-micro/common/log"
+	"github.com/fananchong/v-micro/common/metadata"
 	"github.com/fananchong/v-micro/registry"
 	"github.com/fananchong/v-micro/selector"
+	"github.com/fananchong/v-micro/transport"
 )
 
 type rpcClient struct {
@@ -46,7 +48,32 @@ func (r *rpcClient) newCodec(contentType string) (codec.NewCodec, error) {
 }
 
 func (r *rpcClient) call(ctx context.Context, node *registry.Node, req client.Request, opts client.CallOptions) (err error) {
-	// TODO
+	msg := &transport.Message{
+		Header: make(map[string]string),
+	}
+
+	md, ok := metadata.FromContext(ctx)
+	if ok {
+		for k, v := range md {
+			msg.Header[k] = v
+		}
+	}
+
+	// set the content type for the request
+	msg.Header["Content-Type"] = req.ContentType()
+
+	// var cf codec.NewCodec
+	// if cf, err = r.newCodec(req.ContentType()); err != nil {
+	// 	return
+	// }
+
+	// codec := newRPCCodec(msg, c, cf)
+
+	// rsp := &rpcResponse{
+	// 	socket: c,
+	// 	codec:  codec,
+	// }
+
 	return
 }
 
@@ -111,9 +138,9 @@ func (r *rpcClient) Call(ctx context.Context, request client.Request, opts ...cl
 		return err, true
 	}
 
-	var try bool
+	var canTry bool
 	for {
-		if err, try = call(); err != nil && try {
+		if err, canTry = call(); err != nil && canTry {
 			log.Errorf("call fail and try again, err:%s", err.Error())
 			continue
 		} else {
