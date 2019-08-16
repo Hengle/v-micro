@@ -2,6 +2,8 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fananchong/gotcp v0.0.0-20190809093729-a577b08fcf31 h1:dpdeTEp17MMaPUcZ5yT9PtvXVh3+QqmJSfrnaU8ZbCc=
 github.com/fananchong/gotcp v0.0.0-20190809093729-a577b08fcf31/go.mod h1:NwqSPUhE3lftRXXTbIYO3aSdkdQSs2gCGIZA4Mi1B6c=
+github.com/fananchong/mdns v0.3.1-0.20190816031422-63fd3eb39b7c h1:oIab3p8KOxnnuJ9gHjmXnQZeUxmKuMAtue0bDZyPs/0=
+github.com/fananchong/mdns v0.3.1-0.20190816031422-63fd3eb39b7c/go.mod h1:KJ0dW7KmicXU2BV++qkLlmHYcVv7/hHnbtguSWt9Aoc=
 github.com/gogo/protobuf v1.2.0 h1:xU6/SpYbvkNYiptHJYEDRseDLvYE7wSqhYYNy0QSUzI=
 github.com/gogo/protobuf v1.2.0/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
 github.com/golang/protobuf v1.3.2 h1:6nsPYzhq5kReh6QImI3k5qWzO4PEbvbIW2cwSfR/6xs=
