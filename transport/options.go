@@ -19,6 +19,8 @@ type Options struct {
 
 // DialOptions dial options
 type DialOptions struct {
+	OnClose func()
+
 	// Other options for implementations of the interface
 	// can be stored in a context
 	Context context.Context
@@ -51,5 +53,12 @@ func RecvBufSize(size int) Option {
 func SendBufSize(size int) Option {
 	return func(o *Options) {
 		o.SendBufSize = size
+	}
+}
+
+// OnClose on close callback
+func OnClose(f func()) DialOption {
+	return func(o *DialOptions) {
+		o.OnClose = f
 	}
 }

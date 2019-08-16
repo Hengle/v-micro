@@ -13,6 +13,7 @@ import (
 type socketImpl struct {
 	gotcp.Session
 	chanRecvMsg chan *transport.Message
+	onClose     func()
 }
 
 func (socket *socketImpl) Init(ctx context.Context, conn net.Conn, derived gotcp.ISession) {
@@ -80,6 +81,9 @@ func (socket *socketImpl) OnClose() {
 			close(socket.chanRecvMsg)
 		}
 	}
+	if socket.onClose != nil {
+		socket.onClose()
+	}
 }
 
 type clientImpl struct {
@@ -140,6 +144,7 @@ func (trans *transportImpl) Dial(addr string, opts ...transport.DialOption) (tra
 	for _, o := range opts {
 		o(&cliImpl.opts)
 	}
+	cliImpl.onClose = cliImpl.opts.OnClose
 	if ok := cliImpl.Connect(addr, cliImpl); ok {
 		go cliImpl.Verify()
 		return cliImpl, nil
