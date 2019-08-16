@@ -18,14 +18,14 @@ type rpcClient struct {
 	opts client.Options
 }
 
-func newRPCClient(opt ...client.Option) client.Client {
+func newRPCClient(opts ...client.Option) client.Client {
 	rc := &rpcClient{
 		opts: client.Options{
 			Codecs: make(map[string]codec.NewCodec),
 		},
 	}
 
-	common.InitOptions(&rc.opts, opt...)
+	common.InitOptions(&rc.opts, opts...)
 
 	c := client.Client(rc)
 
@@ -77,8 +77,8 @@ func (r *rpcClient) call(ctx context.Context, node *registry.Node, req client.Re
 	return
 }
 
-func (r *rpcClient) Init(opt ...client.Option) error {
-	common.InitOptions(&r.opts, opt...)
+func (r *rpcClient) Init(opts ...client.Option) error {
+	common.InitOptions(&r.opts, opts...)
 	return nil
 }
 
@@ -155,6 +155,6 @@ func (r *rpcClient) String() string {
 }
 
 // NewClient Creates a new client with the options passed in
-func NewClient(opt ...client.Option) client.Client {
-	return newRPCClient(opt...)
+func NewClient(opts ...client.Option) client.Client {
+	return newRPCClient(opts...)
 }

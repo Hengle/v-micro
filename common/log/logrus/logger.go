@@ -15,8 +15,8 @@ type logger struct {
 	opts log.Options
 }
 
-func (l *logger) Init(opt ...log.Option) (err error) {
-	for _, o := range opt {
+func (l *logger) Init(opts ...log.Option) (err error) {
+	for _, o := range opts {
 		o(&l.opts)
 	}
 	// 暂时关闭，目前只能修改源码才能达成，需要时再动手
@@ -44,12 +44,11 @@ func (l *logger) String() string {
 }
 
 // NewLogger new
-func NewLogger(opt ...log.Option) log.Logger {
-	opts := log.Options{}
-	for _, o := range opt {
-		o(&opts)
+func NewLogger(opts ...log.Option) log.Logger {
+	l := &logger{Logger: logrus.New()}
+	for _, o := range opts {
+		o(&l.opts)
 	}
 
-	l := &logger{logrus.New(), opts}
 	return l
 }

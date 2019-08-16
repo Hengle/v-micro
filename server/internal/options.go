@@ -9,36 +9,36 @@ import (
 )
 
 // InitOptions server 插件都要初始化 options ，因此把它拎出来，放这里
-func InitOptions(opts *server.Options, opt ...server.Option) {
-	for _, o := range opt {
-		o(opts)
+func InitOptions(options *server.Options, opts ...server.Option) {
+	for _, o := range opts {
+		o(options)
 	}
 
-	if opts.Registry == nil {
+	if options.Registry == nil {
 		log.Fatal("Init fail. Registry is nil.")
 	}
 
-	if opts.Transport == nil {
+	if options.Transport == nil {
 		log.Fatal("Init fail. Transport is nil.")
 	}
 
-	if opts.RegisterCheck == nil {
-		opts.RegisterCheck = func(context.Context) error { return nil }
+	if options.RegisterCheck == nil {
+		options.RegisterCheck = func(context.Context) error { return nil }
 	}
 
-	if len(opts.Address) == 0 {
-		opts.Address = ":0"
+	if len(options.Address) == 0 {
+		options.Address = ":0"
 	}
 
-	if len(opts.Name) == 0 {
-		opts.Name = "server"
+	if len(options.Name) == 0 {
+		options.Name = "server"
 	}
 
-	if len(opts.ID) == 0 {
-		opts.ID = uuid.New().String()
+	if len(options.ID) == 0 {
+		options.ID = uuid.New().String()
 	}
 
-	if len(opts.Version) == 0 {
-		opts.Version = "latest"
+	if len(options.Version) == 0 {
+		options.Version = "latest"
 	}
 }

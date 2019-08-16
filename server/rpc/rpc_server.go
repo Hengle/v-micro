@@ -356,6 +356,6 @@ func (s *rpcServer) newCodec(contentType string) (codec.NewCodec, error) {
 }
 
 // NewServer returns a new server with options passed in
-func NewServer(opt ...server.Option) server.Server {
-	return newRPCServer(opt...)
+func NewServer(opts ...server.Option) server.Server {
+	return newRPCServer(opts...)
 }

@@ -184,8 +184,8 @@ func newLogger(name string) log.Logger {
 	return log.DefaultLogger
 }
 
-func newClient(name string, opt ...client.Option) client.Client {
-	cli := DefaultClients[name](opt...)
+func newClient(name string, opts ...client.Option) client.Client {
+	cli := DefaultClients[name](opts...)
 	return cli
 }
 
@@ -203,13 +203,13 @@ func newRegistry(name string) registry.Registry {
 	return r
 }
 
-func newServer(name string, opt ...server.Option) server.Server {
-	srv := DefaultServers[name](opt...)
+func newServer(name string, opts ...server.Option) server.Server {
+	srv := DefaultServers[name](opts...)
 	return srv
 }
 
-func newSelector(name string, opt ...selector.Option) selector.Selector {
-	slt := DefaultSelectors[name](opt...)
+func newSelector(name string, opts ...selector.Option) selector.Selector {
+	slt := DefaultSelectors[name](opts...)
 	return slt
 }
 

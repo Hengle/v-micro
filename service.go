@@ -17,10 +17,10 @@ type service struct {
 	cmd  cmd.Cmd
 }
 
-func newService(opt ...Option) Service {
+func newService(opts ...Option) Service {
 	// 1. Initialize the default plugin
 	c := cmd.NewCmd()
-	opts := Options{
+	options := Options{
 		Logger:    *c.Options().Logger,
 		Client:    *c.Options().Client,
 		Server:    *c.Options().Server,
@@ -31,15 +31,15 @@ func newService(opt ...Option) Service {
 	}
 
 	// 2. Replace the default plugin with options
-	for _, o := range opt {
-		o(&opts)
+	for _, o := range opts {
+		o(&options)
 	}
 
 	// 3. After instantiation, service.Init is called,
 	//    and the command line parameters are internally parsed
 	//    to dynamically replace the plugin.
 	return &service{
-		opts: opts,
+		opts: options,
 		cmd:  c,
 	}
 }

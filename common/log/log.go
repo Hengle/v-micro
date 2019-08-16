@@ -23,7 +23,7 @@ const (
 
 // Logger logger interface
 type Logger interface {
-	Init(opt ...Option) error
+	Init(opts ...Option) error
 	Info(v ...interface{})
 	Infof(format string, v ...interface{})
 	Error(v ...interface{})

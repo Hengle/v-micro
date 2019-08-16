@@ -9,24 +9,24 @@ import (
 var defaultContentType = "application/protobuf"
 
 // InitOptions new
-func InitOptions(opts *client.Options, options ...client.Option) {
-	for _, o := range options {
-		o(opts)
+func InitOptions(options *client.Options, opts ...client.Option) {
+	for _, o := range opts {
+		o(options)
 	}
 
-	if opts.Registry == nil {
+	if options.Registry == nil {
 		log.Fatal("Init fail. Registry is nil.")
 	}
 
-	if opts.Transport == nil {
+	if options.Transport == nil {
 		log.Fatal("Init fail. Transport is nil.")
 	}
 
-	if opts.Selector == nil {
+	if options.Selector == nil {
 		log.Fatal("Init fail. Selector is nil.")
 	}
 
-	if len(opts.ContentType) == 0 {
-		opts.ContentType = defaultContentType
+	if len(options.ContentType) == 0 {
+		options.ContentType = defaultContentType
 	}
 }
