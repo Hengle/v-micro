@@ -79,7 +79,8 @@ func TestWatcher(t *testing.T) {
 	}
 
 	// new registry
-	r := NewRegistry()
+	opt := []registry.Option{Port(5354)}
+	r := NewRegistry(opt...)
 
 	w, err := r.Watch()
 	if err != nil {

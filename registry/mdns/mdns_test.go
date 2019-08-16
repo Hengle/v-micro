@@ -51,7 +51,8 @@ func TestMDNS(t *testing.T) {
 	}
 
 	// new registry
-	r := NewRegistry()
+	opt := []registry.Option{Port(5354)}
+	r := NewRegistry(opt...)
 
 	for _, service := range testData {
 		// register service
