@@ -62,17 +62,27 @@ func (r *rpcClient) call(ctx context.Context, node *registry.Node, req client.Re
 	// set the content type for the request
 	msg.Header["Content-Type"] = req.ContentType()
 
-	// var cf codec.NewCodec
-	// if cf, err = r.newCodec(req.ContentType()); err != nil {
-	// 	return
-	// }
+	var cf codec.NewCodec
+	if cf, err = r.newCodec(req.ContentType()); err != nil {
+		return
+	}
 
-	// codec := newRPCCodec(msg, c, cf)
+	var cli transport.Client
+	if cli, err = r.Options().Connector.Get(node); err != nil {
+		return
+	}
 
-	// rsp := &rpcResponse{
-	// 	socket: c,
-	// 	codec:  codec,
-	// }
+	cc := newRPCCodec(msg, cli, cf)
+
+	reqM := codec.Message{
+		Service: req.Service(),
+		Method:  req.Method(),
+		Type:    codec.Request,
+	}
+
+	if err = cc.Write(&reqM, msg); err != nil {
+		return
+	}
 
 	return
 }

@@ -26,6 +26,10 @@ func InitOptions(options *client.Options, opts ...client.Option) {
 		log.Fatal("Init fail. Selector is nil.")
 	}
 
+	if options.Connector == nil {
+		log.Fatal("Init fail. Connector is nil.")
+	}
+
 	if len(options.ContentType) == 0 {
 		options.ContentType = defaultContentType
 	}
