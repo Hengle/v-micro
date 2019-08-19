@@ -11,7 +11,6 @@ env:
 
 script:
   - ./make.sh lint
-  - ./make.sh race
   - ./make.sh coverage
   - ./make.sh build
 
