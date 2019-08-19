@@ -37,7 +37,7 @@ type mdnsRegistry struct {
 
 func newRegistry(opts ...registry.Option) registry.Registry {
 	options := registry.Options{
-		Timeout: time.Millisecond * 100,
+		Timeout: 1 * time.Second,
 	}
 
 	registry := &mdnsRegistry{
@@ -112,7 +112,6 @@ func (m *mdnsRegistry) Register(service *registry.Service, opts ...registry.Regi
 
 		var seen bool
 		var e *mdnsEntry
-
 		for _, entry := range entries {
 			if node.ID == entry.id {
 				seen = true
@@ -126,6 +125,7 @@ func (m *mdnsRegistry) Register(service *registry.Service, opts ...registry.Regi
 			continue
 			// hash doesn't match, shutdown
 		} else if seen {
+			log.Infof("id:%s, node hash:%s, old hash:%s. node will restart ...", node.ID, h, e.hash)
 			e.node.Shutdown()
 			// doesn't exist
 		} else {
@@ -243,6 +243,7 @@ func (m *mdnsRegistry) GetService(service string) ([]*registry.Service, error) {
 				}
 
 				if e.TTL == 0 {
+					log.Errorf("node: %v, ttl is 0", e)
 					continue
 				}
 

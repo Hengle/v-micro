@@ -3,7 +3,9 @@ package rpc
 import (
 	"context"
 	"fmt"
+	"os"
 	"runtime/debug"
+	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -131,6 +133,7 @@ func (s *rpcServer) register() (err error) {
 	node.Metadata["transport"] = config.Transport.String()
 	node.Metadata["server"] = s.String()
 	node.Metadata["registry"] = config.Registry.String()
+	node.Metadata["PID"] = strconv.Itoa(os.Getpid())
 
 	service := &registry.Service{
 		Name:    config.Name,

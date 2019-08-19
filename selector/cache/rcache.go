@@ -140,7 +140,10 @@ func (c *cache) deleteOldNode(service string, newservices []*registry.Service) {
 				}
 			}
 		}
-		c.update(&registry.Result{Action: "delete", Service: oldservice}, false)
+		if len(oldservice.Nodes) != 0 {
+			log.Infof("Some nodes have failed ...")
+			c.update(&registry.Result{Action: "delete", Service: oldservice}, false)
+		}
 	}
 }
 
