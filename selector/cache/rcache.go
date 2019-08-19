@@ -33,7 +33,7 @@ type cache struct {
 
 var (
 	// DefaultTTL default ttl
-	DefaultTTL = 30 * time.Second
+	DefaultTTL = 5 * time.Second // TODO 可配置
 )
 
 func backoff(attempts int) time.Duration {

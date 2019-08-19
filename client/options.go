@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/fananchong/v-micro/codec"
+	"github.com/fananchong/v-micro/connector"
 	"github.com/fananchong/v-micro/registry"
 	"github.com/fananchong/v-micro/selector"
 	"github.com/fananchong/v-micro/transport"
@@ -18,6 +19,7 @@ type Options struct {
 	Codecs    map[string]codec.NewCodec
 	Registry  registry.Registry
 	Selector  selector.Selector
+	Connector connector.Connector
 	Transport transport.Transport
 
 	// Middleware for client
@@ -81,6 +83,13 @@ func Transport(t transport.Transport) Option {
 func Selector(s selector.Selector) Option {
 	return func(o *Options) {
 		o.Selector = s
+	}
+}
+
+// Connector connector
+func Connector(ct connector.Connector) Option {
+	return func(o *Options) {
+		o.Connector = ct
 	}
 }
 

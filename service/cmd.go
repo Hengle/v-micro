@@ -12,6 +12,8 @@ import (
 	crpc "github.com/fananchong/v-micro/client/rpc"
 	"github.com/fananchong/v-micro/common/log"
 	"github.com/fananchong/v-micro/common/log/logrus"
+	"github.com/fananchong/v-micro/connector"
+	"github.com/fananchong/v-micro/connector/singleconnection"
 	"github.com/fananchong/v-micro/registry"
 	"github.com/fananchong/v-micro/registry/mdns"
 	"github.com/fananchong/v-micro/selector"
@@ -115,6 +117,11 @@ var (
 			Usage:  "Selector used to pick nodes for querying",
 		},
 		cli.StringFlag{
+			Name:   "connector",
+			EnvVar: "MICRO_CONNECTOR",
+			Usage:  "connector used to manage connections between nodes",
+		},
+		cli.StringFlag{
 			Name:   "transport",
 			EnvVar: "MICRO_TRANSPORT",
 			Usage:  "Transport mechanism used; gotcp",
@@ -151,6 +158,11 @@ var (
 		"cache": cache.NewSelector,
 	}
 
+	// DefaultConnectors default connectors
+	DefaultConnectors = map[string]func(...connector.Option) connector.Connector{
+		"singleconnection": singleconnection.NewConnector,
+	}
+
 	// DefaultServers default servers
 	DefaultServers = map[string]func(...server.Option) server.Server{
 		"rpc": srpc.NewServer,
@@ -167,6 +179,7 @@ var (
 	defaultServer    = "rpc"
 	defaultRegistry  = "mdns"
 	defaultSelector  = "cache"
+	defaultConnector = "singleconnection"
 	defaultTransport = "gotcp"
 )
 
@@ -213,6 +226,11 @@ func newSelector(name string, opts ...selector.Option) selector.Selector {
 	return slt
 }
 
+func newConnctor(name string, opts ...connector.Option) connector.Connector {
+	ct := DefaultConnectors[name](opts...)
+	return ct
+}
+
 func newTransport(name string) transport.Transport {
 	tran := DefaultTransports[name]()
 	return tran
@@ -225,6 +243,9 @@ func newCmd(opts ...Option) Cmd {
 	slt := newSelector(defaultSelector, []selector.Option{
 		selector.Registry(r),
 	}...)
+	ct := newConnctor(defaultConnector, []connector.Option{
+		connector.Transport(tran),
+	}...)
 	srv := newServer(defaultServer, []server.Option{
 		server.Registry(r),
 		server.Transport(tran),
@@ -233,6 +254,7 @@ func newCmd(opts ...Option) Cmd {
 		client.Registry(r),
 		client.Transport(tran),
 		client.Selector(slt),
+		client.Connector(ct),
 	}...)
 	options := Options{
 		Logger:     &l,
@@ -240,6 +262,7 @@ func newCmd(opts ...Option) Cmd {
 		Registry:   &r,
 		Server:     &srv,
 		Selector:   &slt,
+		Connector:  &ct,
 		Transport:  &tran,
 		Loggers:    DefaultLogs,
 		Clients:    DefaultClients,
@@ -288,6 +311,7 @@ func (c *cmd) Before(ctx *cli.Context) error {
 	var serverOpts []server.Option
 	var clientOpts []client.Option
 	var logOpts []log.Option
+	var connectorOpts []connector.Option
 
 	// Set the logger
 	if name := ctx.String("logger"); len(name) > 0 {
@@ -344,6 +368,16 @@ func (c *cmd) Before(ctx *cli.Context) error {
 		clientOpts = append(clientOpts, client.Selector(*c.opts.Selector))
 	}
 
+	// Set the connector
+	if name := ctx.String("connector"); len(name) > 0 && (*c.opts.Connector).String() != name {
+		ct, ok := c.opts.Connectors[name]
+		if !ok {
+			return fmt.Errorf("Connector %s not found", name)
+		}
+		*c.opts.Connector = ct(connector.Transport(*c.opts.Transport))
+		clientOpts = append(clientOpts, client.Connector(*c.opts.Connector))
+	}
+
 	// Set the transport
 	if name := ctx.String("transport"); len(name) > 0 && (*c.opts.Transport).String() != name {
 		t, ok := c.opts.Transports[name]
@@ -354,6 +388,7 @@ func (c *cmd) Before(ctx *cli.Context) error {
 		*c.opts.Transport = t()
 		serverOpts = append(serverOpts, server.Transport(*c.opts.Transport))
 		clientOpts = append(clientOpts, client.Transport(*c.opts.Transport))
+		connectorOpts = append(connectorOpts, connector.Transport(*c.opts.Transport))
 	}
 
 	// Parse the server options
@@ -425,6 +460,10 @@ func (c *cmd) Before(ctx *cli.Context) error {
 
 	if err := (*c.opts.Transport).Init(); err != nil {
 		log.Fatalf("Error init transport: %v", err)
+	}
+
+	if err := (*c.opts.Connector).Init(connectorOpts...); err != nil {
+		log.Fatal("Error init connector: %v", err)
 	}
 
 	// We have some command line opts for the server.

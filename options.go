@@ -6,6 +6,7 @@ import (
 
 	"github.com/fananchong/v-micro/client"
 	"github.com/fananchong/v-micro/common/log"
+	"github.com/fananchong/v-micro/connector"
 	"github.com/fananchong/v-micro/registry"
 	"github.com/fananchong/v-micro/selector"
 	"github.com/fananchong/v-micro/server"
@@ -89,6 +90,13 @@ func Selector(s selector.Selector) Option {
 	}
 }
 
+// Connector sets the connector for the service client
+func Connector(ct connector.Connector) Option {
+	return func(o *Options) {
+		o.Client.Init(client.Connector(ct))
+	}
+}
+
 // Transport sets the transport for the service
 // and the underlying components
 func Transport(t transport.Transport) Option {
@@ -97,6 +105,7 @@ func Transport(t transport.Transport) Option {
 		// Update Client and Server
 		o.Client.Init(client.Transport(t))
 		o.Server.Init(server.Transport(t))
+		o.Client.Options().Connector.Init(connector.Transport(t))
 	}
 }
 

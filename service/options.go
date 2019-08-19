@@ -5,6 +5,7 @@ import (
 
 	"github.com/fananchong/v-micro/client"
 	"github.com/fananchong/v-micro/common/log"
+	"github.com/fananchong/v-micro/connector"
 	"github.com/fananchong/v-micro/registry"
 	"github.com/fananchong/v-micro/selector"
 	"github.com/fananchong/v-micro/server"
@@ -28,6 +29,7 @@ type Options struct {
 	Logger    *log.Logger
 	Registry  *registry.Registry
 	Selector  *selector.Selector
+	Connector *connector.Connector
 	Transport *transport.Transport
 	Client    *client.Client
 	Server    *server.Server
@@ -36,6 +38,7 @@ type Options struct {
 	Clients    map[string]func(...client.Option) client.Client
 	Registries map[string]func(...registry.Option) registry.Registry
 	Selectors  map[string]func(...selector.Option) selector.Selector
+	Connectors map[string]func(...connector.Option) connector.Connector
 	Servers    map[string]func(...server.Option) server.Server
 	Transports map[string]func(...transport.Option) transport.Transport
 
@@ -82,6 +85,13 @@ func Selector(s *selector.Selector) Option {
 	}
 }
 
+// Connector connctor
+func Connector(c *connector.Connector) Option {
+	return func(o *Options) {
+		o.Connector = c
+	}
+}
+
 // Logger logger
 func Logger(l *log.Logger) Option {
 	return func(o *Options) {
@@ -114,41 +124,6 @@ func Client(c *client.Client) Option {
 func Server(s *server.Server) Option {
 	return func(o *Options) {
 		o.Server = s
-	}
-}
-
-// NewClient New client func
-func NewClient(name string, b func(...client.Option) client.Client) Option {
-	return func(o *Options) {
-		o.Clients[name] = b
-	}
-}
-
-// NewRegistry New registry func
-func NewRegistry(name string, r func(...registry.Option) registry.Registry) Option {
-	return func(o *Options) {
-		o.Registries[name] = r
-	}
-}
-
-// NewSelector New selector func
-func NewSelector(name string, s func(...selector.Option) selector.Selector) Option {
-	return func(o *Options) {
-		o.Selectors[name] = s
-	}
-}
-
-// NewServer New server func
-func NewServer(name string, s func(...server.Option) server.Server) Option {
-	return func(o *Options) {
-		o.Servers[name] = s
-	}
-}
-
-// NewTransport New transport func
-func NewTransport(name string, t func(...transport.Option) transport.Transport) Option {
-	return func(o *Options) {
-		o.Transports[name] = t
 	}
 }
 
