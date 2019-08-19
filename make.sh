@@ -16,7 +16,7 @@ function coverage_test(){
     COVERAGE_DIR="${COVERAGE_DIR:-coverage}"
     mkdir -p "$COVERAGE_DIR";
     for package in $(go list $SRC_DIR/...); do
-        go test -race -covermode=count -coverprofile "${COVERAGE_DIR}/${package##*/}.cov" "$package" ;
+        go test -race -covermode=atomic -coverprofile "${COVERAGE_DIR}/${package##*/}.cov" "$package" ;
     done ;
     echo 'mode: count' > "${COVERAGE_DIR}"/coverage.cov ;
     tail -q -n +2 "${COVERAGE_DIR}"/*.cov >> "${COVERAGE_DIR}"/coverage.cov ;
