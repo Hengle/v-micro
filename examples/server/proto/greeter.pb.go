@@ -134,20 +134,5 @@ type GreeterHandler interface {
 }
 
 func RegisterGreeterHandler(s server.Server, hdlr GreeterHandler) error {
-	type greeter interface {
-		Hello(ctx context.Context, in *Request, out *Response) error
-	}
-	type Greeter struct {
-		greeter
-	}
-	h := &greeterHandler{hdlr}
-	return s.Handle(Greeter{h})
-}
-
-type greeterHandler struct {
-	GreeterHandler
-}
-
-func (h *greeterHandler) Hello(ctx context.Context, in *Request, out *Response) error {
-	return h.GreeterHandler.Hello(ctx, in, out)
+	return s.Handle(hdlr)
 }

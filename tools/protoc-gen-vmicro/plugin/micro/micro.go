@@ -198,39 +198,9 @@ func (g *micro) generateService(file *generator.FileDescriptor, service *pb.Serv
 
 	// Server registration.
 	g.P("func Register", servName, "Handler(s ", serverPkg, ".Server, hdlr ", serverType, ") error {")
-	g.P("type ", unexport(servName), " interface {")
-
-	// generate interface methods
-	for _, method := range service.Method {
-		methName := generator.CamelCase(method.GetName())
-		inType := g.typeName(method.GetInputType())
-		outType := g.typeName(method.GetOutputType())
-
-		if !method.GetServerStreaming() && !method.GetClientStreaming() {
-			g.P(methName, "(ctx ", contextPkg, ".Context, in *", inType, ", out *", outType, ") error")
-			continue
-		}
-		g.P(methName, "(ctx ", contextPkg, ".Context, stream server.Stream) error")
-	}
-	g.P("}")
-	g.P("type ", servName, " struct {")
-	g.P(unexport(servName))
-	g.P("}")
-	g.P("h := &", unexport(servName), "Handler{hdlr}")
-	g.P("return s.Handle(", servName, "{h})")
+	g.P("return s.Handle(hdlr)")
 	g.P("}")
 	g.P()
-
-	g.P("type ", unexport(servName), "Handler struct {")
-	g.P(serverType)
-	g.P("}")
-
-	// Server handler implementations.
-	var handlerNames []string
-	for _, method := range service.Method {
-		hname := g.generateServerMethod(servName, method)
-		handlerNames = append(handlerNames, hname)
-	}
 }
 
 // generateClientSignature returns the client-side signature for a method.
@@ -371,91 +341,6 @@ func (g *micro) generateServerSignature(servName string, method *pb.MethodDescri
 		reqArgs = append(reqArgs, "*"+g.typeName(method.GetOutputType()))
 	}
 	return methName + "(" + strings.Join(reqArgs, ", ") + ") " + ret
-}
-
-func (g *micro) generateServerMethod(servName string, method *pb.MethodDescriptorProto) string {
-	methName := generator.CamelCase(method.GetName())
-	hname := fmt.Sprintf("_%s_%s_Handler", servName, methName)
-	serveType := servName + "Handler"
-	inType := g.typeName(method.GetInputType())
-	outType := g.typeName(method.GetOutputType())
-
-	if !method.GetServerStreaming() && !method.GetClientStreaming() {
-		g.P("func (h *", unexport(servName), "Handler) ", methName, "(ctx ", contextPkg, ".Context, in *", inType, ", out *", outType, ") error {")
-		g.P("return h.", serveType, ".", methName, "(ctx, in, out)")
-		g.P("}")
-		g.P()
-		return hname
-	}
-	streamType := unexport(servName) + methName + "Stream"
-	g.P("func (h *", unexport(servName), "Handler) ", methName, "(ctx ", contextPkg, ".Context, stream server.Stream) error {")
-	if !method.GetClientStreaming() {
-		g.P("m := new(", inType, ")")
-		g.P("if err := stream.Recv(m); err != nil { return err }")
-		g.P("return h.", serveType, ".", methName, "(ctx, m, &", streamType, "{stream})")
-	} else {
-		g.P("return h.", serveType, ".", methName, "(ctx, &", streamType, "{stream})")
-	}
-	g.P("}")
-	g.P()
-
-	genSend := method.GetServerStreaming()
-	genRecv := method.GetClientStreaming()
-
-	// Stream auxiliary types and methods.
-	g.P("type ", servName, "_", methName, "Stream interface {")
-	g.P("SendMsg(interface{}) error")
-	g.P("RecvMsg(interface{}) error")
-	g.P("Close() error")
-
-	if genSend {
-		g.P("Send(*", outType, ") error")
-	}
-
-	if genRecv {
-		g.P("Recv() (*", inType, ", error)")
-	}
-
-	g.P("}")
-	g.P()
-
-	g.P("type ", streamType, " struct {")
-	g.P("stream ", serverPkg, ".Stream")
-	g.P("}")
-	g.P()
-
-	g.P("func (x *", streamType, ") Close() error {")
-	g.P("return x.stream.Close()")
-	g.P("}")
-	g.P()
-
-	g.P("func (x *", streamType, ") SendMsg(m interface{}) error {")
-	g.P("return x.stream.Send(m)")
-	g.P("}")
-	g.P()
-
-	g.P("func (x *", streamType, ") RecvMsg(m interface{}) error {")
-	g.P("return x.stream.Recv(m)")
-	g.P("}")
-	g.P()
-
-	if genSend {
-		g.P("func (x *", streamType, ") Send(m *", outType, ") error {")
-		g.P("return x.stream.Send(m)")
-		g.P("}")
-		g.P()
-	}
-
-	if genRecv {
-		g.P("func (x *", streamType, ") Recv() (*", inType, ", error) {")
-		g.P("m := new(", inType, ")")
-		g.P("if err := x.stream.Recv(m); err != nil { return nil, err }")
-		g.P("return m, nil")
-		g.P("}")
-		g.P()
-	}
-
-	return hname
 }
 
 // AddPluginToParams Simplify the protoc call statement by adding 'plugins=vmicro' directly to the command line arguments.

@@ -1,8 +1,9 @@
 set WORK_DIR=%~dp0
-
-cd ..\..\..\..\
+set SRC_DIR=%WORK_DIR%\..\..\..\..\
+cd %SRC_DIR%
+set GOBIN=%SRC_DIR%bin
 go install ./...
-cp /y bin\protoc-gen-vmicro.exe %WORK_DIR%
+copy /y bin\protoc-gen-vmicro.exe %WORK_DIR%
 
 cd %WORK_DIR%
 protoc --proto_path=. --vmicro_out=. greeter.proto

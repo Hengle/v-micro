@@ -321,8 +321,7 @@ func (router *router) readHeader(cc codec.Reader) (service *service, mtype *meth
 }
 
 func (router *router) Handle(h interface{}) error {
-	rcvr := reflect.ValueOf(h)
-	name := reflect.Indirect(rcvr).Type().Name()
+	name := reflect.Indirect(reflect.ValueOf(h)).Type().Name()
 
 	router.mu.Lock()
 	defer router.mu.Unlock()
@@ -338,8 +337,8 @@ func (router *router) Handle(h interface{}) error {
 	}
 
 	s := new(service)
-	s.typ = reflect.TypeOf(rcvr)
-	s.rcvr = reflect.ValueOf(rcvr)
+	s.typ = reflect.TypeOf(h)
+	s.rcvr = reflect.ValueOf(h)
 
 	// check name
 	if _, present := router.serviceMap[name]; present {
