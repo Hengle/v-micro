@@ -115,6 +115,10 @@ func (r *rpcClient) next(request client.Request, opts client.CallOptions) (selec
 	return next, nil
 }
 
+func (r *rpcClient) NewRequest(service, method string, req interface{}) client.Request {
+	return newRequest(service, method, req, r.opts.ContentType)
+}
+
 func (r *rpcClient) Call(ctx context.Context, request client.Request, opts ...client.CallOption) (err error) {
 	// make a copy of call opts
 	callOpts := r.opts.CallOptions

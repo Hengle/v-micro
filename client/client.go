@@ -14,6 +14,7 @@ type Client interface {
 	Init(...Option) error
 	Options() Options
 	Handle(interface{}) error
+	NewRequest(service, method string, req interface{}) Request
 	Call(ctx context.Context, req Request, opts ...CallOption) error
 	String() string
 }

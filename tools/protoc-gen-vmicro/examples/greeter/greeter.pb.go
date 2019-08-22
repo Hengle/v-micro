@@ -124,30 +124,45 @@ var fileDescriptor_e585294ab3f34af5 = []byte{
 	0xff, 0xff, 0xe4, 0xec, 0xf3, 0x94, 0x9e, 0x00, 0x00, 0x00,
 }
 
-// Reference imports to suppress errors if they are not otherwise used.
-var _ context.Context
-var _ client.Option
-var _ server.Option
+// Client API for Greeter service
+
+type GreeterService interface {
+	Hello(ctx context.Context, in *Request, opts ...client.CallOption) error
+}
+
+type greeterService struct {
+	c    client.Client
+	name string
+}
+
+func NewGreeterService(name string, c client.Client) GreeterService {
+	if c == nil {
+		panic("client is nil")
+	}
+	if len(name) == 0 {
+		panic("name is nil")
+	}
+	return &greeterService{
+		c:    c,
+		name: name,
+	}
+}
+
+func (c *greeterService) Hello(ctx context.Context, in *Request, opts ...client.CallOption) error {
+	req := c.c.NewRequest(c.name, "Greeter.Hello", in)
+	err := c.c.Call(ctx, req, opts...)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Server API for Greeter service
 
 type GreeterHandler interface {
 	Hello(context.Context, *Request, *Response) error
 }
 
 func RegisterGreeterHandler(s server.Server, hdlr GreeterHandler) error {
-	type greeter interface {
-		Hello(ctx context.Context, in *Request, out *Response) error
-	}
-	type Greeter struct {
-		greeter
-	}
-	h := &greeterHandler{hdlr}
-	return s.Handle(Greeter{h})
-}
-
-type greeterHandler struct {
-	GreeterHandler
-}
-
-func (h *greeterHandler) Hello(ctx context.Context, in *Request, out *Response) error {
-	return h.GreeterHandler.Hello(ctx, in, out)
+	return s.Handle(hdlr)
 }

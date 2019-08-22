@@ -71,11 +71,6 @@ func (g *micro) Generate(file *generator.FileDescriptor) {
 	if len(file.FileDescriptorProto.Service) == 0 {
 		return
 	}
-	g.P("// Reference imports to suppress errors if they are not otherwise used.")
-	g.P("var _ ", contextPkg, ".Context")
-	g.P("var _ ", clientPkg, ".Option")
-	g.P("var _ ", serverPkg, ".Option")
-	g.P()
 
 	for i, service := range file.FileDescriptorProto.Service {
 		g.generateService(file, service, i)
@@ -128,63 +123,59 @@ func (g *micro) generateService(file *generator.FileDescriptor, service *pb.Serv
 		servAlias = strings.TrimSuffix(servAlias, "Service")
 	}
 
-	// 暂时注释客户端相关代码
-	if false {
+	g.P()
+	g.P("// Client API for ", servName, " service")
+	g.P()
 
-		g.P()
-		g.P("// Client API for ", servName, " service")
-		g.P()
-
-		// Client interface.
-		g.P("type ", servAlias, " interface {")
-		for i, method := range service.Method {
-			g.gen.PrintComments(fmt.Sprintf("%s,2,%d", path, i)) // 2 means method in a service.
-			g.P(g.generateClientSignature(servName, method))
-		}
-		g.P("}")
-		g.P()
-
-		// Client structure.
-		g.P("type ", unexport(servAlias), " struct {")
-		g.P("c ", clientPkg, ".Client")
-		g.P("name string")
-		g.P("}")
-		g.P()
-
-		// NewClient factory.
-		g.P("func New", servAlias, " (name string, c ", clientPkg, ".Client) ", servAlias, " {")
-		g.P("if c == nil {")
-		g.P("c = ", clientPkg, ".NewClient()")
-		g.P("}")
-		g.P("if len(name) == 0 {")
-		g.P(`name = "`, serviceName, `"`)
-		g.P("}")
-		g.P("return &", unexport(servAlias), "{")
-		g.P("c: c,")
-		g.P("name: name,")
-		g.P("}")
-		g.P("}")
-		g.P()
-		var methodIndex, streamIndex int
-		serviceDescVar := "_" + servName + "_serviceDesc"
-		// Client method implementations.
-		for _, method := range service.Method {
-			var descExpr string
-			if !method.GetServerStreaming() {
-				// Unary RPC method
-				descExpr = fmt.Sprintf("&%s.Methods[%d]", serviceDescVar, methodIndex)
-				methodIndex++
-			} else {
-				// Streaming RPC method
-				descExpr = fmt.Sprintf("&%s.Streams[%d]", serviceDescVar, streamIndex)
-				streamIndex++
-			}
-			g.generateClientMethod(serviceName, servName, serviceDescVar, method, descExpr)
-		}
-
-		g.P("// Server API for ", servName, " service")
-		g.P()
+	// Client interface.
+	g.P("type ", servAlias, " interface {")
+	for i, method := range service.Method {
+		g.gen.PrintComments(fmt.Sprintf("%s,2,%d", path, i)) // 2 means method in a service.
+		g.P(g.generateClientSignature(servName, method))
 	}
+	g.P("}")
+	g.P()
+
+	// Client structure.
+	g.P("type ", unexport(servAlias), " struct {")
+	g.P("c ", clientPkg, ".Client")
+	g.P("name string")
+	g.P("}")
+	g.P()
+
+	// NewClient factory.
+	g.P("func New", servAlias, " (name string, c ", clientPkg, ".Client) ", servAlias, " {")
+	g.P("if c == nil {")
+	g.P("panic(\"client is nil\")")
+	g.P("}")
+	g.P("if len(name) == 0 {")
+	g.P("panic(\"name is nil\")")
+	g.P("}")
+	g.P("return &", unexport(servAlias), "{")
+	g.P("c: c,")
+	g.P("name: name,")
+	g.P("}")
+	g.P("}")
+	g.P()
+	var methodIndex, streamIndex int
+	serviceDescVar := "_" + servName + "_serviceDesc"
+	// Client method implementations.
+	for _, method := range service.Method {
+		var descExpr string
+		if !method.GetServerStreaming() {
+			// Unary RPC method
+			descExpr = fmt.Sprintf("&%s.Methods[%d]", serviceDescVar, methodIndex)
+			methodIndex++
+		} else {
+			// Streaming RPC method
+			descExpr = fmt.Sprintf("&%s.Streams[%d]", serviceDescVar, streamIndex)
+			streamIndex++
+		}
+		g.generateClientMethod(serviceName, servName, serviceDescVar, method, descExpr)
+	}
+
+	g.P("// Server API for ", servName, " service")
+	g.P()
 
 	// Server interface.
 	serverType := servName + "Handler"
@@ -214,12 +205,7 @@ func (g *micro) generateClientSignature(servName string, method *pb.MethodDescri
 	if method.GetClientStreaming() {
 		reqArg = ""
 	}
-	respName := "*" + g.typeName(method.GetOutputType())
-	if method.GetServerStreaming() || method.GetClientStreaming() {
-		respName = servName + "_" + generator.CamelCase(origMethName) + "Service"
-	}
-
-	return fmt.Sprintf("%s(ctx %s.Context%s, opts ...%s.CallOption) (%s, error)", methName, contextPkg, reqArg, clientPkg, respName)
+	return fmt.Sprintf("%s(ctx %s.Context%s, opts ...%s.CallOption) error", methName, contextPkg, reqArg, clientPkg)
 }
 
 func (g *micro) generateClientMethod(reqServ, servName, serviceDescVar string, method *pb.MethodDescriptorProto, descExpr string) {
@@ -238,11 +224,10 @@ func (g *micro) generateClientMethod(reqServ, servName, serviceDescVar string, m
 	g.P("func (c *", unexport(servAlias), ") ", g.generateClientSignature(servName, method), "{")
 	if !method.GetServerStreaming() && !method.GetClientStreaming() {
 		g.P(`req := c.c.NewRequest(c.name, "`, reqMethod, `", in)`)
-		g.P("out := new(", outType, ")")
 		// TODO: Pass descExpr to Invoke.
-		g.P("err := ", `c.c.Call(ctx, req, out, opts...)`)
-		g.P("if err != nil { return nil, err }")
-		g.P("return out, nil")
+		g.P("err := ", `c.c.Call(ctx, req, opts...)`)
+		g.P("if err != nil { return err }")
+		g.P("return nil")
 		g.P("}")
 		g.P()
 		return
