@@ -52,7 +52,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	_ "github.com/fananchong/v-micro/tools/protoc-gen-vmicro/plugin/micro"
+	"github.com/fananchong/v-micro/tools/protoc-gen-vmicro/plugin/micro"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/generator"
 )
@@ -76,7 +76,7 @@ func main() {
 		g.Fail("no files to generate")
 	}
 
-	g.CommandLineParameters(g.Request.GetParameter())
+	g.CommandLineParameters(micro.AddPluginToParams(g.Request.GetParameter()))
 
 	// Create a wrapped version of the Descriptors and EnumDescriptors that
 	// point to the file that defines them.

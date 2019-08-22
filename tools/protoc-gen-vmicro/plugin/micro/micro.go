@@ -128,59 +128,63 @@ func (g *micro) generateService(file *generator.FileDescriptor, service *pb.Serv
 		servAlias = strings.TrimSuffix(servAlias, "Service")
 	}
 
-	g.P()
-	g.P("// Client API for ", servName, " service")
-	g.P()
+	// 暂时注释客户端相关代码
+	if false {
 
-	// Client interface.
-	g.P("type ", servAlias, " interface {")
-	for i, method := range service.Method {
-		g.gen.PrintComments(fmt.Sprintf("%s,2,%d", path, i)) // 2 means method in a service.
-		g.P(g.generateClientSignature(servName, method))
-	}
-	g.P("}")
-	g.P()
+		g.P()
+		g.P("// Client API for ", servName, " service")
+		g.P()
 
-	// Client structure.
-	g.P("type ", unexport(servAlias), " struct {")
-	g.P("c ", clientPkg, ".Client")
-	g.P("name string")
-	g.P("}")
-	g.P()
-
-	// NewClient factory.
-	g.P("func New", servAlias, " (name string, c ", clientPkg, ".Client) ", servAlias, " {")
-	g.P("if c == nil {")
-	g.P("c = ", clientPkg, ".NewClient()")
-	g.P("}")
-	g.P("if len(name) == 0 {")
-	g.P(`name = "`, serviceName, `"`)
-	g.P("}")
-	g.P("return &", unexport(servAlias), "{")
-	g.P("c: c,")
-	g.P("name: name,")
-	g.P("}")
-	g.P("}")
-	g.P()
-	var methodIndex, streamIndex int
-	serviceDescVar := "_" + servName + "_serviceDesc"
-	// Client method implementations.
-	for _, method := range service.Method {
-		var descExpr string
-		if !method.GetServerStreaming() {
-			// Unary RPC method
-			descExpr = fmt.Sprintf("&%s.Methods[%d]", serviceDescVar, methodIndex)
-			methodIndex++
-		} else {
-			// Streaming RPC method
-			descExpr = fmt.Sprintf("&%s.Streams[%d]", serviceDescVar, streamIndex)
-			streamIndex++
+		// Client interface.
+		g.P("type ", servAlias, " interface {")
+		for i, method := range service.Method {
+			g.gen.PrintComments(fmt.Sprintf("%s,2,%d", path, i)) // 2 means method in a service.
+			g.P(g.generateClientSignature(servName, method))
 		}
-		g.generateClientMethod(serviceName, servName, serviceDescVar, method, descExpr)
-	}
+		g.P("}")
+		g.P()
 
-	g.P("// Server API for ", servName, " service")
-	g.P()
+		// Client structure.
+		g.P("type ", unexport(servAlias), " struct {")
+		g.P("c ", clientPkg, ".Client")
+		g.P("name string")
+		g.P("}")
+		g.P()
+
+		// NewClient factory.
+		g.P("func New", servAlias, " (name string, c ", clientPkg, ".Client) ", servAlias, " {")
+		g.P("if c == nil {")
+		g.P("c = ", clientPkg, ".NewClient()")
+		g.P("}")
+		g.P("if len(name) == 0 {")
+		g.P(`name = "`, serviceName, `"`)
+		g.P("}")
+		g.P("return &", unexport(servAlias), "{")
+		g.P("c: c,")
+		g.P("name: name,")
+		g.P("}")
+		g.P("}")
+		g.P()
+		var methodIndex, streamIndex int
+		serviceDescVar := "_" + servName + "_serviceDesc"
+		// Client method implementations.
+		for _, method := range service.Method {
+			var descExpr string
+			if !method.GetServerStreaming() {
+				// Unary RPC method
+				descExpr = fmt.Sprintf("&%s.Methods[%d]", serviceDescVar, methodIndex)
+				methodIndex++
+			} else {
+				// Streaming RPC method
+				descExpr = fmt.Sprintf("&%s.Streams[%d]", serviceDescVar, streamIndex)
+				streamIndex++
+			}
+			g.generateClientMethod(serviceName, servName, serviceDescVar, method, descExpr)
+		}
+
+		g.P("// Server API for ", servName, " service")
+		g.P()
+	}
 
 	// Server interface.
 	serverType := servName + "Handler"
@@ -193,7 +197,7 @@ func (g *micro) generateService(file *generator.FileDescriptor, service *pb.Serv
 	g.P()
 
 	// Server registration.
-	g.P("func Register", servName, "Handler(s ", serverPkg, ".Server, hdlr ", serverType, ", opts ...", serverPkg, ".HandlerOption) error {")
+	g.P("func Register", servName, "Handler(s ", serverPkg, ".Server, hdlr ", serverType, ") error {")
 	g.P("type ", unexport(servName), " interface {")
 
 	// generate interface methods
@@ -213,7 +217,7 @@ func (g *micro) generateService(file *generator.FileDescriptor, service *pb.Serv
 	g.P(unexport(servName))
 	g.P("}")
 	g.P("h := &", unexport(servName), "Handler{hdlr}")
-	g.P("return s.Handle(s.NewHandler(&", servName, "{h}, opts...))")
+	g.P("return s.Handle(", servName, "{h})")
 	g.P("}")
 	g.P()
 
@@ -452,4 +456,18 @@ func (g *micro) generateServerMethod(servName string, method *pb.MethodDescripto
 	}
 
 	return hname
+}
+
+// AddPluginToParams Simplify the protoc call statement by adding 'plugins=vmicro' directly to the command line arguments.
+func AddPluginToParams(p string) string {
+	params := p
+	if strings.Contains(params, "plugins=") {
+		params = strings.Replace(params, "plugins=", "plugins=vmicro+", -1)
+	} else {
+		if len(params) > 0 {
+			params += ","
+		}
+		params += "plugins=vmicro"
+	}
+	return params
 }
