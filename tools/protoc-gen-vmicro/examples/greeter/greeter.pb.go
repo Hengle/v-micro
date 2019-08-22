@@ -131,7 +131,7 @@ type GreeterService interface {
 }
 
 type GreeterCallback interface {
-	Hello(ctx context.Context, rsp *Response) error
+	Hello(ctx context.Context, rsp *Response)
 }
 
 type greeterService struct {
