@@ -135,6 +135,12 @@ func (g *micro) generateService(file *generator.FileDescriptor, service *pb.Serv
 	}
 	g.P("}")
 	g.P()
+	g.P("type ", servName, "Callback interface {")
+	for _, method := range service.Method {
+		g.P(g.generateClientCallbackSignature(servName, method))
+	}
+	g.P("}")
+	g.P()
 
 	// Client structure.
 	g.P("type ", unexport(servAlias), " struct {")
@@ -144,12 +150,15 @@ func (g *micro) generateService(file *generator.FileDescriptor, service *pb.Serv
 	g.P()
 
 	// NewClient factory.
-	g.P("func New", servAlias, " (name string, c ", clientPkg, ".Client) ", servAlias, " {")
+	g.P("func New", servAlias, " (name string, hdcb ", servName, "Callback, c ", clientPkg, ".Client) ", servAlias, " {")
 	g.P("if c == nil {")
 	g.P("panic(\"client is nil\")")
 	g.P("}")
 	g.P("if len(name) == 0 {")
 	g.P("panic(\"name is nil\")")
+	g.P("}")
+	g.P("if err := c.Handle(hdcb); err != nil {")
+	g.P("panic(err)")
 	g.P("}")
 	g.P("return &", unexport(servAlias), "{")
 	g.P("c: c,")
@@ -201,11 +210,21 @@ func (g *micro) generateClientSignature(servName string, method *pb.MethodDescri
 	if reservedClientName[methName] {
 		methName += "_"
 	}
-	reqArg := ", in *" + g.typeName(method.GetInputType())
+	reqArg := ", req *" + g.typeName(method.GetInputType())
 	if method.GetClientStreaming() {
 		reqArg = ""
 	}
 	return fmt.Sprintf("%s(ctx %s.Context%s, opts ...%s.CallOption) error", methName, contextPkg, reqArg, clientPkg)
+}
+
+func (g *micro) generateClientCallbackSignature(servName string, method *pb.MethodDescriptorProto) string {
+	origMethName := method.GetName()
+	methName := generator.CamelCase(origMethName)
+	if reservedClientName[methName] {
+		methName += "_"
+	}
+	respName := ", rsp *" + g.typeName(method.GetOutputType())
+	return fmt.Sprintf("%s(ctx %s.Context%s) error", methName, contextPkg, respName)
 }
 
 func (g *micro) generateClientMethod(reqServ, servName, serviceDescVar string, method *pb.MethodDescriptorProto, descExpr string) {
@@ -223,9 +242,9 @@ func (g *micro) generateClientMethod(reqServ, servName, serviceDescVar string, m
 
 	g.P("func (c *", unexport(servAlias), ") ", g.generateClientSignature(servName, method), "{")
 	if !method.GetServerStreaming() && !method.GetClientStreaming() {
-		g.P(`req := c.c.NewRequest(c.name, "`, reqMethod, `", in)`)
+		g.P(`r := c.c.NewRequest(c.name, "`, reqMethod, `", req)`)
 		// TODO: Pass descExpr to Invoke.
-		g.P("err := ", `c.c.Call(ctx, req, opts...)`)
+		g.P("err := ", `c.c.Call(ctx, r, opts...)`)
 		g.P("if err != nil { return err }")
 		g.P("return nil")
 		g.P("}")
@@ -314,16 +333,16 @@ func (g *micro) generateServerSignature(servName string, method *pb.MethodDescri
 
 	var reqArgs []string
 	ret := "error"
-	reqArgs = append(reqArgs, contextPkg+".Context")
+	reqArgs = append(reqArgs, "ctx "+contextPkg+".Context")
 
 	if !method.GetClientStreaming() {
-		reqArgs = append(reqArgs, "*"+g.typeName(method.GetInputType()))
+		reqArgs = append(reqArgs, "req *"+g.typeName(method.GetInputType()))
 	}
 	if method.GetServerStreaming() || method.GetClientStreaming() {
 		reqArgs = append(reqArgs, servName+"_"+generator.CamelCase(origMethName)+"Stream")
 	}
 	if !method.GetClientStreaming() && !method.GetServerStreaming() {
-		reqArgs = append(reqArgs, "*"+g.typeName(method.GetOutputType()))
+		reqArgs = append(reqArgs, "rsp *"+g.typeName(method.GetOutputType()))
 	}
 	return methName + "(" + strings.Join(reqArgs, ", ") + ") " + ret
 }

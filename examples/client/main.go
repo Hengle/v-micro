@@ -10,9 +10,18 @@ import (
 
 var service micro.Service
 
+// Greeter Greeter
+type Greeter struct{}
+
+// Hello Greeter.Hello
+func (c *Greeter) Hello(ctx context.Context, rsp *proto.Response) error {
+	log.Info("Received Greeter.Hello Response:%s", rsp.GetMsg())
+	return nil
+}
+
 func test() (err error) {
 	// Use the generated client stub
-	cl := proto.NewGreeterService("greeter", service.Client())
+	cl := proto.NewGreeterService("greeter", new(Greeter), service.Client())
 
 	// Make request
 	err = cl.Hello(context.Background(), &proto.Request{

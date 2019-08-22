@@ -127,7 +127,11 @@ var fileDescriptor_e585294ab3f34af5 = []byte{
 // Client API for Greeter service
 
 type GreeterService interface {
-	Hello(ctx context.Context, in *Request, opts ...client.CallOption) error
+	Hello(ctx context.Context, req *Request, opts ...client.CallOption) error
+}
+
+type GreeterCallback interface {
+	Hello(ctx context.Context, rsp *Response) error
 }
 
 type greeterService struct {
@@ -135,12 +139,15 @@ type greeterService struct {
 	name string
 }
 
-func NewGreeterService(name string, c client.Client) GreeterService {
+func NewGreeterService(name string, hdcb GreeterCallback, c client.Client) GreeterService {
 	if c == nil {
 		panic("client is nil")
 	}
 	if len(name) == 0 {
 		panic("name is nil")
+	}
+	if err := c.Handle(hdcb); err != nil {
+		panic(err)
 	}
 	return &greeterService{
 		c:    c,
@@ -148,9 +155,9 @@ func NewGreeterService(name string, c client.Client) GreeterService {
 	}
 }
 
-func (c *greeterService) Hello(ctx context.Context, in *Request, opts ...client.CallOption) error {
-	req := c.c.NewRequest(c.name, "Greeter.Hello", in)
-	err := c.c.Call(ctx, req, opts...)
+func (c *greeterService) Hello(ctx context.Context, req *Request, opts ...client.CallOption) error {
+	r := c.c.NewRequest(c.name, "Greeter.Hello", req)
+	err := c.c.Call(ctx, r, opts...)
 	if err != nil {
 		return err
 	}
@@ -160,7 +167,7 @@ func (c *greeterService) Hello(ctx context.Context, in *Request, opts ...client.
 // Server API for Greeter service
 
 type GreeterHandler interface {
-	Hello(context.Context, *Request, *Response) error
+	Hello(ctx context.Context, req *Request, rsp *Response) error
 }
 
 func RegisterGreeterHandler(s server.Server, hdlr GreeterHandler) error {
