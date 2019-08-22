@@ -2,8 +2,6 @@ package micro
 
 import (
 	"fmt"
-	"path"
-	"strconv"
 	"strings"
 
 	pb "github.com/golang/protobuf/protoc-gen-go/descriptor"
@@ -23,7 +21,7 @@ func init() {
 }
 
 // micro is an implementation of the Go protocol buffer compiler's
-// plugin architecture.  It generates bindings for go-micro support.
+// plugin architecture.  It generates bindings for v-micro support.
 type micro struct {
 	gen *generator.Generator
 }
@@ -40,15 +38,11 @@ var (
 	contextPkg string
 	clientPkg  string
 	serverPkg  string
-	pkgImports map[generator.GoPackageName]bool
 )
 
 // Init initializes the plugin.
 func (g *micro) Init(gen *generator.Generator) {
 	g.gen = gen
-	contextPkg = generator.RegisterUniquePackageName("context", nil)
-	clientPkg = generator.RegisterUniquePackageName("client", nil)
-	serverPkg = generator.RegisterUniquePackageName("server", nil)
 }
 
 // Given a type name defined in a .proto, return its object.
@@ -72,6 +66,10 @@ func (g *micro) Generate(file *generator.FileDescriptor) {
 		return
 	}
 
+	contextPkg = string(g.gen.AddImport(contextPkgPath))
+	clientPkg = string(g.gen.AddImport(clientPkgPath))
+	serverPkg = string(g.gen.AddImport(serverPkgPath))
+
 	for i, service := range file.FileDescriptorProto.Service {
 		g.generateService(file, service, i)
 	}
@@ -79,31 +77,13 @@ func (g *micro) Generate(file *generator.FileDescriptor) {
 
 // GenerateImports generates the import declaration for this file.
 func (g *micro) GenerateImports(file *generator.FileDescriptor) {
-	if len(file.FileDescriptorProto.Service) == 0 {
-		return
-	}
-	g.P("import (")
-	g.P(contextPkg, " ", strconv.Quote(path.Join(g.gen.ImportPrefix, contextPkgPath)))
-	g.P(clientPkg, " ", strconv.Quote(path.Join(g.gen.ImportPrefix, clientPkgPath)))
-	g.P(serverPkg, " ", strconv.Quote(path.Join(g.gen.ImportPrefix, serverPkgPath)))
-	g.P(")")
-	g.P()
-}
-
-// reservedClientName records whether a client name is reserved on the client side.
-var reservedClientName = map[string]bool{
-	// TODO: do we need any in go-micro?
 }
 
 func unexport(s string) string {
 	if len(s) == 0 {
 		return ""
 	}
-	name := strings.ToLower(s[:1]) + s[1:]
-	if pkgImports[generator.GoPackageName(name)] {
-		return name + "_"
-	}
-	return name
+	return strings.ToLower(s[:1]) + s[1:]
 }
 
 // generateService generates all the code for the named service.
@@ -199,9 +179,6 @@ func (g *micro) generateService(file *generator.FileDescriptor, service *pb.Serv
 func (g *micro) generateClientSignature(servName string, method *pb.MethodDescriptorProto) string {
 	origMethName := method.GetName()
 	methName := generator.CamelCase(origMethName)
-	if reservedClientName[methName] {
-		methName += "_"
-	}
 	reqArg := ", req *" + g.typeName(method.GetInputType())
 	return fmt.Sprintf("%s(ctx %s.Context%s, opts ...%s.CallOption) error", methName, contextPkg, reqArg, clientPkg)
 }
@@ -209,9 +186,6 @@ func (g *micro) generateClientSignature(servName string, method *pb.MethodDescri
 func (g *micro) generateClientCallbackSignature(servName string, method *pb.MethodDescriptorProto) string {
 	origMethName := method.GetName()
 	methName := generator.CamelCase(origMethName)
-	if reservedClientName[methName] {
-		methName += "_"
-	}
 	var args []string
 	ret := ""
 	args = append(args, "ctx "+contextPkg+".Context")
@@ -239,9 +213,6 @@ func (g *micro) generateClientMethod(reqServ, servName, serviceDescVar string, m
 func (g *micro) generateServerSignature(servName string, method *pb.MethodDescriptorProto) string {
 	origMethName := method.GetName()
 	methName := generator.CamelCase(origMethName)
-	if reservedClientName[methName] {
-		methName += "_"
-	}
 	var reqArgs []string
 	ret := "error"
 	reqArgs = append(reqArgs, "ctx "+contextPkg+".Context")

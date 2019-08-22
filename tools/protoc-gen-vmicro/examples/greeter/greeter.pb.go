@@ -4,15 +4,12 @@
 package mypackage
 
 import (
-	fmt "fmt"
-	proto "github.com/golang/protobuf/proto"
-	math "math"
-)
-
-import (
 	context "context"
+	fmt "fmt"
 	client "github.com/fananchong/v-micro/client"
 	server "github.com/fananchong/v-micro/server"
+	proto "github.com/golang/protobuf/proto"
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
