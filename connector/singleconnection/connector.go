@@ -57,12 +57,22 @@ func (s *singleConnection) createConnect(node *registry.Node) (transport.Client,
 	// 3. Add cache
 	s.conns.Store(node.ID, c)
 
-	// 4. Return
+	// 4. Callback
+	if s.opts.OnConnected != nil {
+		s.opts.OnConnected(node.ID, c)
+	}
+
+	// 5. Return
 	return c, nil
 }
 
 func (s *singleConnection) onConnectClose(id string) {
 	log.Infof("Disconnect node, id:%s", id)
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	if s.opts.OnClose != nil {
+		s.opts.OnClose(id)
+	}
 	s.conns.Delete(id)
 }
 

@@ -468,17 +468,13 @@ func (c *cmd) Before(ctx *cli.Context) error {
 
 	// We have some command line opts for the server.
 	// Lets set it up
-	if len(serverOpts) > 0 {
-		if err := (*c.opts.Server).Init(serverOpts...); err != nil {
-			log.Fatalf("Error configuring server: %v", err)
-		}
+	if err := (*c.opts.Server).Init(serverOpts...); err != nil {
+		log.Fatalf("Error configuring server: %v", err)
 	}
 
 	// Use an init option?
-	if len(clientOpts) > 0 {
-		if err := (*c.opts.Client).Init(clientOpts...); err != nil {
-			log.Fatalf("Error configuring client: %v", err)
-		}
+	if err := (*c.opts.Client).Init(clientOpts...); err != nil {
+		log.Fatalf("Error configuring client: %v", err)
 	}
 
 	log.Infof("Install plugin: Logger [%s], Server [%s], Client [%s]",

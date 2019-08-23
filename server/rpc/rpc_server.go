@@ -40,7 +40,6 @@ func newRPCServer(opts ...server.Option) server.Server {
 		exitAccept: make(chan int),
 	}
 	common.InitOptions(&s.opts, opts...)
-	s.router.hdlrWrappers = s.opts.HdlrWrappers
 	return s
 }
 

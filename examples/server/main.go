@@ -13,7 +13,7 @@ type Greeter struct{}
 
 // Hello Greeter.Hello
 func (s *Greeter) Hello(ctx context.Context, req *proto.Request, rsp *proto.Response) error {
-	log.Info("Received Greeter.Hello request")
+	log.Infof("Received Greeter.Hello request. Name:%s", req.Name)
 	rsp.Msg = "Hello " + req.Name
 	return nil
 }

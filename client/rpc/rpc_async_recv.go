@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"context"
-	"sync"
 
 	"github.com/fananchong/v-micro/codec"
 	"github.com/fananchong/v-micro/common/log"
@@ -11,34 +10,15 @@ import (
 	"github.com/fananchong/v-micro/transport"
 )
 
-type rpcAsyncRecv struct {
-	rc      *rpcClient
-	clients sync.Map
+func (r *rpcClient) AsyncRecv(nodeID string, cli transport.Client) {
+	go r.asyncRecv(nodeID, cli)
 }
 
-func (r *rpcAsyncRecv) SetRPCClient(rc *rpcClient) {
-	r.rc = rc
-}
-
-func (r *rpcAsyncRecv) Join(name string, cli transport.Client) {
-LOOP:
-	if old, ok := r.clients.LoadOrStore(name, cli); ok {
-		if old == cli {
-			return
-		}
-		old.(transport.Client).Close()
-		r.clients.Delete(name)
-		goto LOOP
-	}
-	go r.doRecv(cli)
-}
-
-func (r *rpcAsyncRecv) doRecv(cli transport.Client) {
+func (r *rpcClient) asyncRecv(nodeID string, cli transport.Client) {
 	for {
 		var msg transport.Message
 		if err := cli.Recv(&msg); err != nil {
 			log.Error(err)
-			// TODO
 			return
 		}
 
@@ -59,12 +39,12 @@ func (r *rpcAsyncRecv) doRecv(cli transport.Client) {
 		ct := msg.Header["Content-Type"]
 		// no content type
 		if len(ct) == 0 {
-			msg.Header["Content-Type"] = r.rc.Options().ContentType
-			ct = r.rc.Options().ContentType
+			msg.Header["Content-Type"] = r.Options().ContentType
+			ct = r.Options().ContentType
 		}
 		var cf codec.NewCodec
 		var err error
-		if cf, err = r.rc.newCodec(ct); err != nil {
+		if cf, err = r.newCodec(ct); err != nil {
 			log.Error(err)
 			continue
 		}
@@ -81,7 +61,7 @@ func (r *rpcAsyncRecv) doRecv(cli transport.Client) {
 		}
 
 		// serve the actual request using the request router
-		if err := r.rc.router.ServeRequest(ctx, request); err != nil {
+		if err := r.router.ServeRequest(ctx, request); err != nil {
 			log.Error(err)
 			continue
 		}

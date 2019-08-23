@@ -11,6 +11,7 @@ import (
 	"errors"
 	"io"
 	"reflect"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"unicode"
@@ -325,6 +326,13 @@ func (router *router) Handle(h interface{}) error {
 }
 
 func (router *router) ServeRequest(ctx context.Context, r *rpcRequest) error {
+	defer func() {
+		if re := recover(); re != nil {
+			log.Info("panic recovered: ", re)
+			log.Info(string(debug.Stack()))
+		}
+	}()
+
 	service, mtype, req, argv, keepReading, err := router.readRequest(r)
 	if err != nil {
 		log.Error(err)

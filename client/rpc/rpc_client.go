@@ -9,15 +9,15 @@ import (
 	"github.com/fananchong/v-micro/codec"
 	"github.com/fananchong/v-micro/common/log"
 	"github.com/fananchong/v-micro/common/metadata"
+	"github.com/fananchong/v-micro/connector"
 	"github.com/fananchong/v-micro/registry"
 	"github.com/fananchong/v-micro/selector"
 	"github.com/fananchong/v-micro/transport"
 )
 
 type rpcClient struct {
-	opts     client.Options
-	router   *router
-	receiver rpcAsyncRecv
+	opts   client.Options
+	router *router
 }
 
 func newRPCClient(opts ...client.Option) client.Client {
@@ -29,8 +29,6 @@ func newRPCClient(opts ...client.Option) client.Client {
 	}
 
 	common.InitOptions(&rc.opts, opts...)
-	rc.router.hdlrWrappers = rc.opts.HdlrWrappers
-	rc.receiver.SetRPCClient(rc)
 
 	c := client.Client(rc)
 
@@ -76,7 +74,6 @@ func (r *rpcClient) call(ctx context.Context, node *registry.Node, req client.Re
 	if cli, err = r.Options().Connector.Get(node); err != nil {
 		return
 	}
-	r.receiver.Join(node.ID, cli)
 
 	cc := newRPCCodec(msg, cli, cf)
 
@@ -95,6 +92,13 @@ func (r *rpcClient) call(ctx context.Context, node *registry.Node, req client.Re
 
 func (r *rpcClient) Init(opts ...client.Option) error {
 	common.InitOptions(&r.opts, opts...)
+	r.router.hdlrWrappers = r.opts.HdlrWrappers
+
+	connectorOpts := []connector.Option{
+		connector.OnConnected(r.AsyncRecv),
+	}
+	r.opts.Connector.Init(connectorOpts...)
+
 	return nil
 }
 
