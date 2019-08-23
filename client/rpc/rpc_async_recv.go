@@ -49,7 +49,7 @@ func (r *rpcClient) asyncRecv(nodeID string, cli transport.Client) {
 			continue
 		}
 
-		rcodec := newRPCCodec(&msg, cli, cf)
+		rcodec := newRPCCodec(cli, cf)
 
 		// internal request
 		request := &rpcRequest{

@@ -9,7 +9,6 @@ import (
 	"github.com/fananchong/v-micro/internal/buffer"
 	hcodec "github.com/fananchong/v-micro/internal/codec"
 	"github.com/fananchong/v-micro/transport"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -81,8 +80,6 @@ func (c *rpcCodec) Write(r *codec.Message, b interface{}) error {
 	m := &codec.Message{
 		Service: r.Service,
 		Method:  r.Method,
-		ID:      r.ID,
-		Error:   r.Error,
 		Type:    r.Type,
 		Header:  r.Header,
 	}
@@ -99,15 +96,8 @@ func (c *rpcCodec) Write(r *codec.Message, b interface{}) error {
 	// write the body to codec
 	if err := c.codec.Write(m, b); err != nil {
 		c.buf.WBuf.Reset()
-
-		// write an error if it failed
-		m.Error = errors.Wrapf(err, "Unable to encode body").Error()
-		m.Header["Micro-Error"] = m.Error
-		// no body to write
-		if err := c.codec.Write(m, nil); err != nil {
-			log.Error(err)
-			return err
-		}
+		log.Error(err)
+		return err
 	}
 
 	// set the body

@@ -12,10 +12,8 @@ func GetHeader(hdr string, md map[string]string) string {
 
 // GetHeaders get headers
 func GetHeaders(m *codec.Message) {
-	m.ID = GetHeader("Micro-Id", m.Header)
 	m.Method = GetHeader("Micro-Method", m.Header)
 	m.Service = GetHeader("Micro-Service", m.Header)
-	m.Error = GetHeader("Micro-Error", m.Header)
 }
 
 // SetHeaders set headers
@@ -28,8 +26,6 @@ func SetHeaders(m, r *codec.Message) {
 	}
 
 	// set headers
-	set("Micro-Id", r.ID)
 	set("Micro-Service", r.Service)
 	set("Micro-Method", r.Method)
-	set("Micro-Error", r.Error)
 }
