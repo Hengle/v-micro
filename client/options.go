@@ -28,6 +28,8 @@ type Options struct {
 	// Default Call Options
 	CallOptions CallOptions
 
+	HdlrWrappers []HandlerWrapper
+
 	// Other options for implementations of the interface
 	// can be stored in a context
 	Context context.Context
@@ -104,6 +106,13 @@ func Wrap(w Wrapper) Option {
 func WrapCall(cw ...CallWrapper) Option {
 	return func(o *Options) {
 		o.CallOptions.CallWrappers = append(o.CallOptions.CallWrappers, cw...)
+	}
+}
+
+// WrapHandler Adds a handler Wrapper to a list of options passed into the server
+func WrapHandler(w HandlerWrapper) Option {
+	return func(o *Options) {
+		o.HdlrWrappers = append(o.HdlrWrappers, w)
 	}
 }
 

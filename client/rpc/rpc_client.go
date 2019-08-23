@@ -1,4 +1,4 @@
-package client
+package rpc
 
 import (
 	"context"
@@ -15,7 +15,9 @@ import (
 )
 
 type rpcClient struct {
-	opts client.Options
+	opts     client.Options
+	router   *router
+	receiver rpcAsyncRecv
 }
 
 func newRPCClient(opts ...client.Option) client.Client {
@@ -23,9 +25,12 @@ func newRPCClient(opts ...client.Option) client.Client {
 		opts: client.Options{
 			Codecs: make(map[string]codec.NewCodec),
 		},
+		router: newRPCRouter(),
 	}
 
 	common.InitOptions(&rc.opts, opts...)
+	rc.router.hdlrWrappers = rc.opts.HdlrWrappers
+	rc.receiver.SetRPCClient(rc)
 
 	c := client.Client(rc)
 
@@ -71,6 +76,7 @@ func (r *rpcClient) call(ctx context.Context, node *registry.Node, req client.Re
 	if cli, err = r.Options().Connector.Get(node); err != nil {
 		return
 	}
+	r.receiver.Join(node.ID, cli)
 
 	cc := newRPCCodec(msg, cli, cf)
 
@@ -96,9 +102,8 @@ func (r *rpcClient) Options() client.Options {
 	return r.opts
 }
 
-func (r *rpcClient) Handle(interface{}) (err error) {
-	// TODO
-	return
+func (r *rpcClient) Handle(h interface{}) (err error) {
+	return r.router.Handle(h)
 }
 
 func (r *rpcClient) next(request client.Request, opts client.CallOptions) (selector.Next, error) {

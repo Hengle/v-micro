@@ -51,10 +51,7 @@ func (s *rpcServer) Options() server.Options {
 
 func (s *rpcServer) Init(opts ...server.Option) error {
 	common.InitOptions(&s.opts, opts...)
-	r := newRPCRouter()
-	r.hdlrWrappers = s.opts.HdlrWrappers
-	r.serviceMap = s.router.serviceMap
-	s.router = r
+	s.router.hdlrWrappers = s.opts.HdlrWrappers
 	return nil
 }
 
@@ -260,13 +257,7 @@ func (s *rpcServer) serveConn(sock transport.Socket) {
 		var err error
 		if cf, err = s.newCodec(ct); err != nil {
 			log.Error(err)
-			sock.Send(&transport.Message{
-				Header: map[string]string{
-					"Content-Type": "text/plain", // TODO 需要增加编码类型
-				},
-				Body: []byte(err.Error()),
-			})
-			return
+			continue
 		}
 
 		rcodec := newRPCCodec(&msg, sock, cf)
@@ -289,17 +280,7 @@ func (s *rpcServer) serveConn(sock transport.Socket) {
 		// serve the actual request using the request router
 		if err := s.router.ServeRequest(ctx, request, response); err != nil {
 			log.Error(err)
-			// write an error response
-			err = rcodec.Write(&codec.Message{
-				Header: msg.Header,
-				Error:  err.Error(),
-				Type:   codec.Error,
-			}, nil)
-			// could not write the error response
-			if err != nil {
-				log.Infof("rpc: unable to write error response: %v", err)
-			}
-			return
+			continue
 		}
 	}
 }

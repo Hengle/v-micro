@@ -1,4 +1,4 @@
-package client
+package rpc
 
 import (
 	"github.com/fananchong/v-micro/codec"
@@ -37,6 +37,6 @@ func (r *rpcRequest) Body() interface{} {
 	return r.body
 }
 
-func (r *rpcRequest) Codec() codec.Writer {
+func (r *rpcRequest) Codec() codec.Reader {
 	return r.codec
 }

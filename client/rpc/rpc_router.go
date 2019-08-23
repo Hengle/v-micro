@@ -16,9 +16,9 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/fananchong/v-micro/client"
 	"github.com/fananchong/v-micro/codec"
 	"github.com/fananchong/v-micro/common/log"
-	"github.com/fananchong/v-micro/server"
 )
 
 var (
@@ -36,7 +36,6 @@ type methodType struct {
 	sync.Mutex  // protects counters
 	method      reflect.Method
 	ArgType     reflect.Type
-	ReplyType   reflect.Type
 	ContextType reflect.Type
 }
 
@@ -66,7 +65,7 @@ type router struct {
 	freeReq      *request
 	respLock     sync.Mutex // protects freeResp
 	freeResp     *response
-	hdlrWrappers []server.HandlerWrapper
+	hdlrWrappers []client.HandlerWrapper
 }
 
 func newRPCRouter() *router {
@@ -96,7 +95,7 @@ func isExportedOrBuiltinType(t reflect.Type) bool {
 func prepareMethod(method reflect.Method) *methodType {
 	mtype := method.Type
 	mname := method.Name
-	var replyType, argType, contextType reflect.Type
+	var argType, contextType reflect.Type
 
 	// Method must be exported.
 	if method.PkgPath != "" {
@@ -104,10 +103,9 @@ func prepareMethod(method reflect.Method) *methodType {
 	}
 
 	switch mtype.NumIn() {
-	case 4:
+	case 3:
 		// method that takes a context
 		argType = mtype.In(2)
-		replyType = mtype.In(3)
 		contextType = mtype.In(1)
 	default:
 		log.Info("method", mname, "of", mtype, "has wrong number of ins:", mtype.NumIn())
@@ -120,28 +118,7 @@ func prepareMethod(method reflect.Method) *methodType {
 		return nil
 	}
 
-	if replyType.Kind() != reflect.Ptr {
-		log.Info("method", mname, "reply type not a pointer:", replyType)
-		return nil
-	}
-
-	// Reply type must be exported.
-	if !isExportedOrBuiltinType(replyType) {
-		log.Info("method", mname, "reply type not exported:", replyType)
-		return nil
-	}
-
-	// Method needs one out.
-	if mtype.NumOut() != 1 {
-		log.Info("method", mname, "has wrong number of outs:", mtype.NumOut())
-		return nil
-	}
-	// The return type of the method must be error.
-	if returnType := mtype.Out(0); returnType != typeOfError {
-		log.Info("method", mname, "returns", returnType.String(), "not error")
-		return nil
-	}
-	return &methodType{method: method, ArgType: argType, ReplyType: replyType, ContextType: contextType}
+	return &methodType{method: method, ArgType: argType, ContextType: contextType}
 }
 
 func (router *router) sendResponse(sending sync.Locker, req *request, reply interface{}, cc codec.Writer, last bool) error {
@@ -159,26 +136,12 @@ func (router *router) sendResponse(sending sync.Locker, req *request, reply inte
 	return err
 }
 
-func (s *service) call(ctx context.Context, router *router, sending *sync.Mutex, mtype *methodType, req *request, argv, replyv reflect.Value, cc codec.Writer, r *rpcRequest) error {
+func (s *service) call(ctx context.Context, router *router, mtype *methodType, req *request, argv reflect.Value) error {
 	defer router.freeRequest(req)
 
 	function := mtype.method.Func
-	var returnValues []reflect.Value
-
-	// only set if not nil
-	if argv.IsValid() {
-		r.rawBody = argv.Interface()
-	}
-
-	fn := func(ctx context.Context, req server.Request, rsp interface{}) error {
-		returnValues = function.Call([]reflect.Value{s.rcvr, mtype.prepareContext(ctx), reflect.ValueOf(argv.Interface()), reflect.ValueOf(rsp)})
-
-		// The return value for the method is an error.
-		if err := returnValues[0].Interface(); err != nil {
-			log.Error(err)
-			return err.(error)
-		}
-
+	fn := func(ctx context.Context, rsp interface{}) error {
+		function.Call([]reflect.Value{s.rcvr, mtype.prepareContext(ctx), reflect.ValueOf(rsp)})
 		return nil
 	}
 
@@ -188,13 +151,9 @@ func (s *service) call(ctx context.Context, router *router, sending *sync.Mutex,
 	}
 
 	// execute handler
-	if err := fn(ctx, r, replyv.Interface()); err != nil {
-		log.Error(err)
-		return err
-	}
+	fn(ctx, argv.Interface())
 
-	// send response
-	return router.sendResponse(sending, req, replyv.Interface(), cc, true)
+	return nil
 }
 
 func (m *methodType) prepareContext(ctx context.Context) reflect.Value {
@@ -244,7 +203,7 @@ func (router *router) freeResponse(resp *response) {
 	router.respLock.Unlock()
 }
 
-func (router *router) readRequest(r *rpcRequest) (service *service, mtype *methodType, req *request, argv, replyv reflect.Value, keepReading bool, err error) {
+func (router *router) readRequest(r *rpcRequest) (service *service, mtype *methodType, req *request, argv reflect.Value, keepReading bool, err error) {
 	cc := r.Codec()
 
 	service, mtype, req, keepReading, err = router.readHeader(cc)
@@ -274,8 +233,6 @@ func (router *router) readRequest(r *rpcRequest) (service *service, mtype *metho
 	if argIsValue {
 		argv = argv.Elem()
 	}
-
-	replyv = reflect.New(mtype.ReplyType.Elem())
 	return
 }
 
@@ -367,9 +324,8 @@ func (router *router) Handle(h interface{}) error {
 	return nil
 }
 
-func (router *router) ServeRequest(ctx context.Context, r *rpcRequest, rsp *rpcResponse) error {
-	sending := new(sync.Mutex)
-	service, mtype, req, argv, replyv, keepReading, err := router.readRequest(r)
+func (router *router) ServeRequest(ctx context.Context, r *rpcRequest) error {
+	service, mtype, req, argv, keepReading, err := router.readRequest(r)
 	if err != nil {
 		log.Error(err)
 		if !keepReading {
@@ -381,5 +337,5 @@ func (router *router) ServeRequest(ctx context.Context, r *rpcRequest, rsp *rpcR
 		}
 		return err
 	}
-	return service.call(ctx, router, sending, mtype, req, argv, replyv, rsp.Codec(), r)
+	return service.call(ctx, router, mtype, req, argv)
 }

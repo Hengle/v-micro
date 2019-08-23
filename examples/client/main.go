@@ -15,7 +15,7 @@ type Greeter struct{}
 
 // Hello Greeter.Hello
 func (c *Greeter) Hello(ctx context.Context, rsp *proto.Response) {
-	log.Info("Received Greeter.Hello Response:%s", rsp.GetMsg())
+	log.Infof("Received Greeter.Hello Response:%s", rsp.GetMsg())
 }
 
 func test() (err error) {
