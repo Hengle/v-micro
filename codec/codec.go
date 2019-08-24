@@ -57,9 +57,11 @@ type Marshaler interface {
 // the communication, likely followed by the body.
 // In the case of an error, body may be nil.
 type Message struct {
+	ID      string      // 消息队列会用到
 	Type    MessageType // 某些编解码可能会用到
 	Service string      // 服务
 	Method  string      // 方法名， class:method
+	Error   string      // 不会空，则是错误信息
 
 	// The values read from the socket
 	Header map[string]string

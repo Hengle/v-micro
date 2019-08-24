@@ -146,6 +146,7 @@ func prepareMethod(method reflect.Method) *methodType {
 
 func (router *router) sendResponse(sending sync.Locker, req *request, reply interface{}, cc codec.Writer, last bool) error {
 	msg := new(codec.Message)
+	msg.ID = req.msg.ID
 	msg.Type = codec.Response
 	msg.Service = req.msg.Service
 	msg.Method = req.msg.Method

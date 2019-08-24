@@ -51,11 +51,8 @@ func (r *rpcClient) newCodec(contentType string) (codec.NewCodec, error) {
 }
 
 func (r *rpcClient) call(ctx context.Context, node *registry.Node, req client.Request, opts client.CallOptions) (err error) {
-	msg := codec.Message{
-		Service: req.Service(),
-		Method:  req.Method(),
-		Type:    codec.Request,
-		Header:  make(map[string]string),
+	msg := &transport.Message{
+		Header: make(map[string]string),
 	}
 
 	md, ok := metadata.FromContext(ctx)
@@ -78,9 +75,15 @@ func (r *rpcClient) call(ctx context.Context, node *registry.Node, req client.Re
 		return
 	}
 
-	cc := newRPCCodec(cli, cf)
+	cc := newRPCCodec(msg, cli, cf)
 
-	if err = cc.Write(&msg, req.Body()); err != nil {
+	reqM := codec.Message{
+		Service: req.Service(),
+		Method:  req.Method(),
+		Type:    codec.Request,
+	}
+
+	if err = cc.Write(&reqM, req.Body()); err != nil {
 		return
 	}
 

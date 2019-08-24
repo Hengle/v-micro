@@ -9,6 +9,7 @@ package rpc
 import (
 	"context"
 	"errors"
+	"io"
 	"reflect"
 	"runtime/debug"
 	"strings"
@@ -123,6 +124,7 @@ func prepareMethod(method reflect.Method) *methodType {
 
 func (router *router) sendResponse(sending sync.Locker, req *request, reply interface{}, cc codec.Writer, last bool) error {
 	msg := new(codec.Message)
+	msg.ID = req.msg.ID
 	msg.Type = codec.Response
 	msg.Service = req.msg.Service
 	msg.Method = req.msg.Method
@@ -135,7 +137,9 @@ func (router *router) sendResponse(sending sync.Locker, req *request, reply inte
 	return err
 }
 
-func (s *service) call(ctx context.Context, router *router, mtype *methodType, argv reflect.Value) error {
+func (s *service) call(ctx context.Context, router *router, mtype *methodType, req *request, argv reflect.Value) error {
+	defer router.freeRequest(req)
+
 	function := mtype.method.Func
 	fn := func(ctx context.Context, rsp interface{}) error {
 		function.Call([]reflect.Value{s.rcvr, mtype.prepareContext(ctx), reflect.ValueOf(rsp)})
@@ -200,9 +204,10 @@ func (router *router) freeResponse(resp *response) {
 	router.respLock.Unlock()
 }
 
-func (router *router) readRequest(r *rpcRequest) (service *service, mtype *methodType, argv reflect.Value, keepReading bool, err error) {
-	cc := r.codec
-	service, mtype, keepReading, err = router.readHeader(r)
+func (router *router) readRequest(r *rpcRequest) (service *service, mtype *methodType, req *request, argv reflect.Value, keepReading bool, err error) {
+	cc := r.Codec()
+
+	service, mtype, req, keepReading, err = router.readHeader(cc)
 	if err != nil {
 		log.Error(err)
 		if !keepReading {
@@ -232,14 +237,31 @@ func (router *router) readRequest(r *rpcRequest) (service *service, mtype *metho
 	return
 }
 
-func (router *router) readHeader(r *rpcRequest) (service *service, mtype *methodType, keepReading bool, err error) {
+func (router *router) readHeader(cc codec.Reader) (service *service, mtype *methodType, req *request, keepReading bool, err error) {
+	// Grab the request header.
+	msg := new(codec.Message)
+	msg.Type = codec.Request
+	req = router.getRequest()
+	req.msg = msg
+
+	err = cc.ReadHeader(msg, msg.Type)
+	if err != nil {
+		log.Error(err)
+		req = nil
+		if err == io.EOF || err == io.ErrUnexpectedEOF {
+			return
+		}
+		err = errors.New("rpc: router cannot decode request: " + err.Error())
+		return
+	}
+
 	// We read the header successfully. If we see an error now,
 	// we can still recover and move on to the next request.
 	keepReading = true
 
-	serviceMethod := strings.Split(r.Method(), ".")
+	serviceMethod := strings.Split(req.msg.Method, ".")
 	if len(serviceMethod) != 2 {
-		err = errors.New("rpc: service/method request ill-formed: " + r.Method())
+		err = errors.New("rpc: service/method request ill-formed: " + req.msg.Method)
 		return
 	}
 	// Look up the request.
@@ -311,13 +333,17 @@ func (router *router) ServeRequest(ctx context.Context, r *rpcRequest) error {
 		}
 	}()
 
-	service, mtype, argv, keepReading, err := router.readRequest(r)
+	service, mtype, req, argv, keepReading, err := router.readRequest(r)
 	if err != nil {
 		log.Error(err)
 		if !keepReading {
 			return err
 		}
+		// send a response if we actually managed to read a header.
+		if req != nil {
+			router.freeRequest(req)
+		}
 		return err
 	}
-	return service.call(ctx, router, mtype, argv)
+	return service.call(ctx, router, mtype, req, argv)
 }
