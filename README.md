@@ -11,6 +11,35 @@
 
 - [异步 RPC 调用](doc/异步RPC调用使用界面设计.md)
 
+## 依赖
+
+- go1.12 +
+
+## 编译
+
+- Windows 编译
+  ```shell
+  make build
+  ```
+
+- Linux 编译
+  ```shell
+  ./make.sh build
+  ```
+
+## 例子
+
+- [hello](examples/hello) ，入门例子
+- [flags](examples/flags) ，命令行参数例子
+- [registry](examples/registry) ，服务发现例子
+- [echo](examples/echo) ，回显测试
+
+## TODO
+
+- Registry 新增插件: consul
+- 更多的例子
+- 更多的测试、单元测试
+
 
 ## 贡献
 
