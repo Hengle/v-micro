@@ -22,6 +22,7 @@ import (
 type methodType struct {
 	method      reflect.Method
 	ArgType     reflect.Type
+	ReplyType   reflect.Type
 	ContextType reflect.Type
 }
 
@@ -63,7 +64,7 @@ func isExportedOrBuiltinType(t reflect.Type) bool {
 func prepareMethod(method reflect.Method) *methodType {
 	mtype := method.Type
 	mname := method.Name
-	var argType, contextType reflect.Type
+	var replyType, argType, contextType reflect.Type
 
 	// Method must be exported.
 	if method.PkgPath != "" {
@@ -71,12 +72,18 @@ func prepareMethod(method reflect.Method) *methodType {
 	}
 
 	switch mtype.NumIn() {
-	case 3:
+	case 4:
 		// method that takes a context
 		argType = mtype.In(2)
+		replyType = mtype.In(3)
 		contextType = mtype.In(1)
 	default:
 		log.Info("method", mname, "of", mtype, "has wrong number of ins:", mtype.NumIn())
+		return nil
+	}
+
+	if argType.Kind() != reflect.Ptr {
+		log.Info("method", mname, "arg type not a pointer:", argType)
 		return nil
 	}
 
@@ -86,18 +93,29 @@ func prepareMethod(method reflect.Method) *methodType {
 		return nil
 	}
 
-	return &methodType{method: method, ArgType: argType, ContextType: contextType}
+	if replyType.Kind() != reflect.Ptr {
+		log.Info("method", mname, "reply type not a pointer:", replyType)
+		return nil
+	}
+
+	// Reply type must be exported.
+	if !isExportedOrBuiltinType(replyType) {
+		log.Info("method", mname, "reply type not exported:", replyType)
+		return nil
+	}
+
+	return &methodType{method: method, ArgType: argType, ReplyType: replyType, ContextType: contextType}
 }
 
-func (s *service) call(ctx context.Context, router *router, mtype *methodType, argv reflect.Value) error {
+func (s *service) call(ctx context.Context, router *router, mtype *methodType, argv, replyv reflect.Value) error {
 	function := mtype.method.Func
-	fn := func(ctx context.Context, rsp interface{}) error {
-		function.Call([]reflect.Value{s.rcvr, mtype.prepareContext(ctx), reflect.ValueOf(rsp)})
+	fn := func(ctx context.Context, req, rsp interface{}) error {
+		function.Call([]reflect.Value{s.rcvr, mtype.prepareContext(ctx), reflect.ValueOf(req), reflect.ValueOf(rsp)})
 		return nil
 	}
 
 	// execute handler
-	fn(ctx, argv.Interface())
+	fn(ctx, argv.Interface(), replyv.Interface())
 
 	return nil
 }
@@ -109,34 +127,28 @@ func (m *methodType) prepareContext(ctx context.Context) reflect.Value {
 	return reflect.Zero(m.ContextType)
 }
 
-func (router *router) readRequest(r *rpcRequest) (service *service, mtype *methodType, argv reflect.Value, err error) {
-	cc := r.Codec()
-
+func (router *router) readRequest(r *rpcRequest) (service *service, mtype *methodType, argv, replyv reflect.Value, err error) {
 	service, mtype, err = router.readHeader(r)
 	if err != nil {
 		log.Error(err)
-
-		// discard body
-		cc.ReadBody(nil)
 		return
 	}
 
 	// Decode the argument value.
-	argIsValue := false // if true, need to indirect before calling.
-	if mtype.ArgType.Kind() == reflect.Ptr {
-		argv = reflect.New(mtype.ArgType.Elem())
-	} else {
-		argv = reflect.New(mtype.ArgType)
-		argIsValue = true
-	}
-	// argv guaranteed to be a pointer now.
-	if err = cc.ReadBody(argv.Interface()); err != nil {
+	cc0 := r.Codec(0)
+	replyv = reflect.New(mtype.ReplyType.Elem())
+	if err = cc0.ReadBody(replyv.Interface()); err != nil {
 		log.Error(err)
 		return
 	}
-	if argIsValue {
-		argv = argv.Elem()
+
+	cc1 := r.Codec(1)
+	argv = reflect.New(mtype.ArgType.Elem())
+	if err = cc1.ReadBody(argv.Interface()); err != nil {
+		log.Error(err)
+		return
 	}
+
 	return
 }
 
@@ -208,10 +220,10 @@ func (router *router) ServeRequest(ctx context.Context, r *rpcRequest) error {
 		}
 	}()
 
-	service, mtype, argv, err := router.readRequest(r)
+	service, mtype, argv, replyv, err := router.readRequest(r)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
-	return service.call(ctx, router, mtype, argv)
+	return service.call(ctx, router, mtype, argv, replyv)
 }

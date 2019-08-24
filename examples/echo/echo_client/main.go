@@ -11,21 +11,19 @@ import (
 )
 
 var service micro.Service
-var r = rand.New(rand.NewSource(time.Now().Unix()))
-var num = uint32(r.Int31n(1000))
 var cl proto.EchoService
+var r = rand.New(rand.NewSource(time.Now().Unix()))
 
 // Echo Echo
 type Echo struct{}
 
 // Echo Echo.Echo
-func (e *Echo) Echo(ctx context.Context, rsp *proto.Response) {
-	if num != rsp.Num {
+func (e *Echo) Echo(ctx context.Context, req *proto.Request, rsp *proto.Response) {
+	if req.Num != rsp.Num {
 		log.Fatalf("data error!")
 	}
-	num = uint32(r.Int31n(1000))
 	cl.Echo(context.Background(), &proto.Request{
-		Num: num,
+		Num: uint32(r.Int31n(1000)),
 	})
 }
 
@@ -35,7 +33,7 @@ func start() (err error) {
 
 	// Make request
 	err = cl.Echo(context.Background(), &proto.Request{
-		Num: num,
+		Num: uint32(r.Int31n(1000)),
 	})
 	return
 }

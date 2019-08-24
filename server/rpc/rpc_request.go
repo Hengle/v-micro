@@ -37,3 +37,7 @@ func (r *rpcRequest) Header() map[string]string {
 func (r *rpcRequest) Body() interface{} {
 	return r.rawBody
 }
+
+func (r *rpcRequest) BodyData() []byte {
+	return r.body
+}

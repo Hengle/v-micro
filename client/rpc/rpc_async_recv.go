@@ -49,15 +49,15 @@ func (r *rpcClient) asyncRecv(nodeID string, cli transport.Client) {
 			continue
 		}
 
-		rcodec := newRPCCodec(&msg, cli, cf)
+		rcodec0 := newRPCCodec(msg.Body, cli, cf)
+		rcodec1 := newRPCCodec([]byte(hcodec.GetHeader("Micro-RD", msg.Header)), cli, cf)
 
 		// internal request
 		request := &rpcRequest{
 			service:     hcodec.GetHeader("Micro-Service", msg.Header),
 			method:      hcodec.GetHeader("Micro-Method", msg.Header),
 			contentType: ct,
-			codec:       rcodec,
-			body:        msg.Body,
+			codec:       []codec.Codec{rcodec0, rcodec1},
 		}
 
 		// serve the actual request using the request router

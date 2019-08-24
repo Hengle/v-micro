@@ -8,7 +8,7 @@ type rpcRequest struct {
 	service     string
 	method      string
 	contentType string
-	codec       codec.Codec
+	codec       []codec.Codec
 	body        interface{}
 }
 
@@ -37,6 +37,6 @@ func (r *rpcRequest) Body() interface{} {
 	return r.body
 }
 
-func (r *rpcRequest) Codec() codec.Reader {
-	return r.codec
+func (r *rpcRequest) Codec(index int) codec.Reader {
+	return r.codec[index]
 }

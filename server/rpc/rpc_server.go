@@ -259,7 +259,7 @@ func (s *rpcServer) serveConn(sock transport.Socket) {
 			continue
 		}
 
-		rcodec := newRPCCodec(&msg, sock, cf)
+		rcodec := newRPCCodec(msg.Body, sock, cf)
 
 		// internal request
 		request := &rpcRequest{

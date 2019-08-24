@@ -189,6 +189,7 @@ func (g *micro) generateClientCallbackSignature(servName string, method *pb.Meth
 	var args []string
 	ret := ""
 	args = append(args, "ctx "+contextPkg+".Context")
+	args = append(args, "req *"+g.typeName(method.GetInputType()))
 	args = append(args, "rsp *"+g.typeName(method.GetOutputType()))
 	return methName + "(" + strings.Join(args, ", ") + ") " + ret
 }

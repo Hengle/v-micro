@@ -124,6 +124,9 @@ func (router *router) sendResponse(r *rpcRequest, reply interface{}, cc codec.Wr
 	var msg codec.Message
 	msg.Service = r.Service()
 	msg.Method = r.Method()
+	msg.Header = make(map[string]string)
+	msg.Header["Micro-RD"] = string(r.BodyData())
+	msg.Header["Content-Type"] = r.ContentType()
 	err := cc.Write(&msg, reply)
 	return err
 }
@@ -172,33 +175,19 @@ func (m *methodType) prepareContext(ctx context.Context) reflect.Value {
 }
 
 func (router *router) readRequest(r *rpcRequest) (service *service, mtype *methodType, argv, replyv reflect.Value, err error) {
-	cc := r.Codec()
-
 	service, mtype, err = router.readHeader(r)
 	if err != nil {
 		log.Error(err)
-		// discard body
-		cc.ReadBody(nil)
 		return
 	}
 
 	// Decode the argument value.
-	argIsValue := false // if true, need to indirect before calling.
-	if mtype.ArgType.Kind() == reflect.Ptr {
-		argv = reflect.New(mtype.ArgType.Elem())
-	} else {
-		argv = reflect.New(mtype.ArgType)
-		argIsValue = true
-	}
-	// argv guaranteed to be a pointer now.
+	cc := r.Codec()
+	argv = reflect.New(mtype.ArgType.Elem())
 	if err = cc.ReadBody(argv.Interface()); err != nil {
 		log.Error(err)
 		return
 	}
-	if argIsValue {
-		argv = argv.Elem()
-	}
-
 	replyv = reflect.New(mtype.ReplyType.Elem())
 	return
 }

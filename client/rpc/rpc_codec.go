@@ -14,7 +14,6 @@ import (
 type rpcCodec struct {
 	client transport.Client
 	codec  codec.Codec
-	req    *transport.Message
 	buf    *buffer.ReadWriteCloser
 }
 
@@ -25,32 +24,21 @@ var (
 	}
 )
 
-func newRPCCodec(req *transport.Message, client transport.Client, c codec.NewCodec) codec.Codec {
+func newRPCCodec(rbuf []byte, client transport.Client, c codec.NewCodec) codec.Codec {
 	rwc := &buffer.ReadWriteCloser{
-		RBuf: bytes.NewBuffer(req.Body),
+		RBuf: bytes.NewBuffer(rbuf),
 		WBuf: bytes.NewBuffer(nil),
 	}
 	r := &rpcCodec{
 		buf:    rwc,
 		client: client,
 		codec:  c(rwc),
-		req:    req,
 	}
 	return r
 }
 
 func (c *rpcCodec) Write(m *codec.Message, body interface{}) (err error) {
 	c.buf.WBuf.Reset()
-
-	// create header
-	if m.Header == nil {
-		m.Header = map[string]string{}
-	}
-
-	// copy original header
-	for k, v := range c.req.Header {
-		m.Header[k] = v
-	}
 
 	// set the headers
 	hcodec.SetHeaders(m, m)
@@ -82,11 +70,6 @@ func (c *rpcCodec) ReadHeader(r *codec.Message) (err error) {
 }
 
 func (c *rpcCodec) ReadBody(b interface{}) (err error) {
-	// don't read empty body
-	if len(c.req.Body) == 0 {
-		return nil
-	}
-
 	// read body
 	if err = c.codec.ReadBody(b); err != nil {
 		log.Error(err)

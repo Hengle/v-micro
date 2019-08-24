@@ -126,7 +126,7 @@ type EchoService interface {
 }
 
 type EchoCallback interface {
-	Echo(ctx context.Context, rsp *Response)
+	Echo(ctx context.Context, req *Request, rsp *Response)
 }
 
 type echoService struct {

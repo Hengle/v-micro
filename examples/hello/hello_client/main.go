@@ -14,7 +14,7 @@ var service micro.Service
 type Greeter struct{}
 
 // Hello Greeter.Hello
-func (c *Greeter) Hello(ctx context.Context, rsp *proto.Response) {
+func (c *Greeter) Hello(ctx context.Context, req *proto.Request, rsp *proto.Response) {
 	log.Infof("Received Greeter.Hello Response:%s", rsp.GetMsg())
 }
 
