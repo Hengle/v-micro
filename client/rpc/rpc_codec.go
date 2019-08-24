@@ -77,7 +77,7 @@ func (c *rpcCodec) Write(m *codec.Message, body interface{}) (err error) {
 	return
 }
 
-func (c *rpcCodec) ReadHeader(r *codec.Message, t codec.MessageType) (err error) {
+func (c *rpcCodec) ReadHeader(r *codec.Message) (err error) {
 	// the initial message
 	m := codec.Message{
 		Header: c.req.Header,
@@ -88,7 +88,7 @@ func (c *rpcCodec) ReadHeader(r *codec.Message, t codec.MessageType) (err error)
 	hcodec.GetHeaders(&m)
 
 	// read header via codec
-	if err = c.codec.ReadHeader(&m, codec.Request); err != nil {
+	if err = c.codec.ReadHeader(&m); err != nil {
 		log.Error(err)
 		return
 	}

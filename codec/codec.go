@@ -5,20 +5,6 @@ import (
 	"io"
 )
 
-const (
-	// Error message type, error
-	Error MessageType = iota
-	// Request message type, request
-	Request
-	// Response message type, response
-	Response
-	// Event message type, event
-	Event
-)
-
-// MessageType message type
-type MessageType int
-
 // NewCodec Takes in a connection/buffer and returns a new Codec
 type NewCodec func(io.ReadWriteCloser) Codec
 
@@ -36,7 +22,7 @@ type Codec interface {
 
 // Reader reader
 type Reader interface {
-	ReadHeader(*Message, MessageType) error
+	ReadHeader(*Message) error
 	ReadBody(interface{}) error
 }
 
@@ -57,11 +43,8 @@ type Marshaler interface {
 // the communication, likely followed by the body.
 // In the case of an error, body may be nil.
 type Message struct {
-	ID      string      // 消息队列会用到
-	Type    MessageType // 某些编解码可能会用到
-	Service string      // 服务
-	Method  string      // 方法名， class:method
-	Error   string      // 不会空，则是错误信息
+	Service string // 服务
+	Method  string // 方法名， class:method
 
 	// The values read from the socket
 	Header map[string]string

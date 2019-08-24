@@ -14,7 +14,7 @@ type codecImpl struct {
 	Conn io.ReadWriteCloser
 }
 
-func (c *codecImpl) ReadHeader(m *codec.Message, t codec.MessageType) error {
+func (c *codecImpl) ReadHeader(m *codec.Message) error {
 	return nil
 }
 

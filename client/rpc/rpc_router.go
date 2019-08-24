@@ -124,8 +124,6 @@ func prepareMethod(method reflect.Method) *methodType {
 
 func (router *router) sendResponse(sending sync.Locker, req *request, reply interface{}, cc codec.Writer, last bool) error {
 	msg := new(codec.Message)
-	msg.ID = req.msg.ID
-	msg.Type = codec.Response
 	msg.Service = req.msg.Service
 	msg.Method = req.msg.Method
 	resp := router.getResponse()
@@ -240,11 +238,10 @@ func (router *router) readRequest(r *rpcRequest) (service *service, mtype *metho
 func (router *router) readHeader(cc codec.Reader) (service *service, mtype *methodType, req *request, keepReading bool, err error) {
 	// Grab the request header.
 	msg := new(codec.Message)
-	msg.Type = codec.Request
 	req = router.getRequest()
 	req.msg = msg
 
-	err = cc.ReadHeader(msg, msg.Type)
+	err = cc.ReadHeader(msg)
 	if err != nil {
 		log.Error(err)
 		req = nil

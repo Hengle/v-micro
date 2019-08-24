@@ -80,7 +80,6 @@ func (r *rpcClient) call(ctx context.Context, node *registry.Node, req client.Re
 	reqM := codec.Message{
 		Service: req.Service(),
 		Method:  req.Method(),
-		Type:    codec.Request,
 	}
 
 	if err = cc.Write(&reqM, req.Body()); err != nil {
