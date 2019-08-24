@@ -91,7 +91,6 @@ func (r *rpcClient) call(ctx context.Context, node *registry.Node, req client.Re
 
 func (r *rpcClient) Init(opts ...client.Option) error {
 	common.InitOptions(&r.opts, opts...)
-	r.router.hdlrWrappers = r.opts.HdlrWrappers
 
 	connectorOpts := []connector.Option{
 		connector.OnConnected(r.AsyncRecv),

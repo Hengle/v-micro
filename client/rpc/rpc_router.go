@@ -9,7 +9,6 @@ package rpc
 import (
 	"context"
 	"errors"
-	"io"
 	"reflect"
 	"runtime/debug"
 	"strings"
@@ -17,24 +16,10 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/fananchong/v-micro/client"
-	"github.com/fananchong/v-micro/codec"
 	"github.com/fananchong/v-micro/common/log"
 )
 
-var (
-	// A value sent as a placeholder for the server's response value when the server
-	// receives an invalid request. It is never decoded by the client since the Response
-	// contains an error when it is used.
-	invalidRequest = struct{}{}
-
-	// Precompute the reflect type for error. Can't use error directly
-	// because Typeof takes an empty interface value. This is annoying.
-	typeOfError = reflect.TypeOf((*error)(nil)).Elem()
-)
-
 type methodType struct {
-	sync.Mutex  // protects counters
 	method      reflect.Method
 	ArgType     reflect.Type
 	ContextType reflect.Type
@@ -47,32 +32,14 @@ type service struct {
 	method map[string]*methodType // registered methods
 }
 
-type request struct {
-	msg  *codec.Message
-	next *request // for free list in Server
-}
-
-type response struct {
-	msg  *codec.Message
-	next *response // for free list in Server
-}
-
 // router represents an RPC router.
 type router struct {
-	name         string
-	mu           sync.Mutex // protects the serviceMap
-	serviceMap   map[string]*service
-	reqLock      sync.Mutex // protects freeReq
-	freeReq      *request
-	respLock     sync.Mutex // protects freeResp
-	freeResp     *response
-	hdlrWrappers []client.HandlerWrapper
+	name       string
+	serviceMap sync.Map
 }
 
 func newRPCRouter() *router {
-	return &router{
-		serviceMap: make(map[string]*service),
-	}
+	return &router{}
 }
 
 // Is this an exported - upper case - name?
@@ -122,31 +89,11 @@ func prepareMethod(method reflect.Method) *methodType {
 	return &methodType{method: method, ArgType: argType, ContextType: contextType}
 }
 
-func (router *router) sendResponse(sending sync.Locker, req *request, reply interface{}, cc codec.Writer, last bool) error {
-	msg := new(codec.Message)
-	msg.Service = req.msg.Service
-	msg.Method = req.msg.Method
-	resp := router.getResponse()
-	resp.msg = msg
-	sending.Lock()
-	err := cc.Write(resp.msg, reply)
-	sending.Unlock()
-	router.freeResponse(resp)
-	return err
-}
-
-func (s *service) call(ctx context.Context, router *router, mtype *methodType, req *request, argv reflect.Value) error {
-	defer router.freeRequest(req)
-
+func (s *service) call(ctx context.Context, router *router, mtype *methodType, argv reflect.Value) error {
 	function := mtype.method.Func
 	fn := func(ctx context.Context, rsp interface{}) error {
 		function.Call([]reflect.Value{s.rcvr, mtype.prepareContext(ctx), reflect.ValueOf(rsp)})
 		return nil
-	}
-
-	// wrap the handler
-	for i := len(router.hdlrWrappers); i > 0; i-- {
-		fn = router.hdlrWrappers[i-1](fn)
 	}
 
 	// execute handler
@@ -162,55 +109,13 @@ func (m *methodType) prepareContext(ctx context.Context) reflect.Value {
 	return reflect.Zero(m.ContextType)
 }
 
-func (router *router) getRequest() *request {
-	router.reqLock.Lock()
-	req := router.freeReq
-	if req == nil {
-		req = new(request)
-	} else {
-		router.freeReq = req.next
-		*req = request{}
-	}
-	router.reqLock.Unlock()
-	return req
-}
-
-func (router *router) freeRequest(req *request) {
-	router.reqLock.Lock()
-	req.next = router.freeReq
-	router.freeReq = req
-	router.reqLock.Unlock()
-}
-
-func (router *router) getResponse() *response {
-	router.respLock.Lock()
-	resp := router.freeResp
-	if resp == nil {
-		resp = new(response)
-	} else {
-		router.freeResp = resp.next
-		*resp = response{}
-	}
-	router.respLock.Unlock()
-	return resp
-}
-
-func (router *router) freeResponse(resp *response) {
-	router.respLock.Lock()
-	resp.next = router.freeResp
-	router.freeResp = resp
-	router.respLock.Unlock()
-}
-
-func (router *router) readRequest(r *rpcRequest) (service *service, mtype *methodType, req *request, argv reflect.Value, keepReading bool, err error) {
+func (router *router) readRequest(r *rpcRequest) (service *service, mtype *methodType, argv reflect.Value, err error) {
 	cc := r.Codec()
 
-	service, mtype, req, keepReading, err = router.readHeader(cc)
+	service, mtype, err = router.readHeader(r)
 	if err != nil {
 		log.Error(err)
-		if !keepReading {
-			return
-		}
+
 		// discard body
 		cc.ReadBody(nil)
 		return
@@ -235,41 +140,20 @@ func (router *router) readRequest(r *rpcRequest) (service *service, mtype *metho
 	return
 }
 
-func (router *router) readHeader(cc codec.Reader) (service *service, mtype *methodType, req *request, keepReading bool, err error) {
-	// Grab the request header.
-	msg := new(codec.Message)
-	req = router.getRequest()
-	req.msg = msg
-
-	err = cc.ReadHeader(msg)
-	if err != nil {
-		log.Error(err)
-		req = nil
-		if err == io.EOF || err == io.ErrUnexpectedEOF {
-			return
-		}
-		err = errors.New("rpc: router cannot decode request: " + err.Error())
-		return
-	}
-
-	// We read the header successfully. If we see an error now,
-	// we can still recover and move on to the next request.
-	keepReading = true
-
-	serviceMethod := strings.Split(req.msg.Method, ".")
+func (router *router) readHeader(r *rpcRequest) (s *service, mtype *methodType, err error) {
+	serviceMethod := strings.Split(r.Method(), ".")
 	if len(serviceMethod) != 2 {
-		err = errors.New("rpc: service/method request ill-formed: " + req.msg.Method)
+		err = errors.New("rpc: service/method request ill-formed: " + r.Method())
 		return
 	}
 	// Look up the request.
-	router.mu.Lock()
-	service = router.serviceMap[serviceMethod[0]]
-	router.mu.Unlock()
-	if service == nil {
+	tmpV, ok := router.serviceMap.Load(serviceMethod[0])
+	if !ok {
 		err = errors.New("rpc: can't find service " + serviceMethod[0])
 		return
 	}
-	mtype = service.method[serviceMethod[1]]
+	s = tmpV.(*service)
+	mtype = s.method[serviceMethod[1]]
 	if mtype == nil {
 		err = errors.New("rpc: can't find method " + serviceMethod[1])
 	}
@@ -278,12 +162,6 @@ func (router *router) readHeader(cc codec.Reader) (service *service, mtype *meth
 
 func (router *router) Handle(h interface{}) error {
 	name := reflect.Indirect(reflect.ValueOf(h)).Type().Name()
-
-	router.mu.Lock()
-	defer router.mu.Unlock()
-	if router.serviceMap == nil {
-		router.serviceMap = make(map[string]*service)
-	}
 
 	if len(name) == 0 {
 		return errors.New("rpc.Handle: handler has no name")
@@ -297,7 +175,7 @@ func (router *router) Handle(h interface{}) error {
 	s.rcvr = reflect.ValueOf(h)
 
 	// check name
-	if _, present := router.serviceMap[name]; present {
+	if _, present := router.serviceMap.Load(name); present {
 		return errors.New("rpc.Handle: service already defined: " + name)
 	}
 
@@ -318,7 +196,7 @@ func (router *router) Handle(h interface{}) error {
 	}
 
 	// save handler
-	router.serviceMap[s.name] = s
+	router.serviceMap.Store(s.name, s)
 	return nil
 }
 
@@ -330,17 +208,10 @@ func (router *router) ServeRequest(ctx context.Context, r *rpcRequest) error {
 		}
 	}()
 
-	service, mtype, req, argv, keepReading, err := router.readRequest(r)
+	service, mtype, argv, err := router.readRequest(r)
 	if err != nil {
 		log.Error(err)
-		if !keepReading {
-			return err
-		}
-		// send a response if we actually managed to read a header.
-		if req != nil {
-			router.freeRequest(req)
-		}
 		return err
 	}
-	return service.call(ctx, router, mtype, req, argv)
+	return service.call(ctx, router, mtype, argv)
 }

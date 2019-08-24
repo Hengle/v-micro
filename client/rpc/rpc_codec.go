@@ -78,28 +78,15 @@ func (c *rpcCodec) Write(m *codec.Message, body interface{}) (err error) {
 }
 
 func (c *rpcCodec) ReadHeader(r *codec.Message) (err error) {
-	// the initial message
-	m := codec.Message{
-		Header: c.req.Header,
-		Body:   c.req.Body,
-	}
-
-	// set some internal things
-	hcodec.GetHeaders(&m)
-
-	// read header via codec
-	if err = c.codec.ReadHeader(&m); err != nil {
-		log.Error(err)
-		return
-	}
-
-	// set message
-	*r = m
-
 	return
 }
 
 func (c *rpcCodec) ReadBody(b interface{}) (err error) {
+	// don't read empty body
+	if len(c.req.Body) == 0 {
+		return nil
+	}
+
 	// read body
 	if err = c.codec.ReadBody(b); err != nil {
 		log.Error(err)
