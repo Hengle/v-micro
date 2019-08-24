@@ -43,24 +43,6 @@ func newRPCCodec(req *transport.Message, socket transport.Socket, c codec.NewCod
 }
 
 func (c *rpcCodec) ReadHeader(r *codec.Message) (err error) {
-	// the initial message
-	m := codec.Message{
-		Header: c.req.Header,
-		Body:   c.req.Body,
-	}
-
-	// set some internal things
-	hcodec.GetHeaders(&m)
-
-	// read header via codec
-	if err = c.codec.ReadHeader(&m); err != nil {
-		log.Error(err)
-		return
-	}
-
-	// set message
-	*r = m
-
 	return
 }
 
@@ -73,21 +55,10 @@ func (c *rpcCodec) ReadBody(b interface{}) error {
 	return c.codec.ReadBody(b)
 }
 
-func (c *rpcCodec) Write(r *codec.Message, b interface{}) error {
+func (c *rpcCodec) Write(m *codec.Message, b interface{}) error {
 	c.buf.WBuf.Reset()
 
-	// create a new message
-	m := &codec.Message{
-		Service: r.Service,
-		Method:  r.Method,
-		Header:  r.Header,
-	}
-
-	if m.Header == nil {
-		m.Header = map[string]string{}
-	}
-
-	hcodec.SetHeaders(m, r)
+	hcodec.SetHeaders(m, m)
 
 	// the body being sent
 	var body []byte
