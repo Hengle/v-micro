@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package proto;
+
+service Echo {
+	rpc Echo(Request) returns (Response) {}
+}
+
+message Request {
+	uint32 Num = 1;
+}
+
+message Response {
+	uint32 Num = 1;
+}
