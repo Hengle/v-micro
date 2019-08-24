@@ -55,10 +55,21 @@ func (c *rpcCodec) ReadBody(b interface{}) error {
 	return c.codec.ReadBody(b)
 }
 
-func (c *rpcCodec) Write(m *codec.Message, b interface{}) error {
+func (c *rpcCodec) Write(r *codec.Message, b interface{}) error {
 	c.buf.WBuf.Reset()
 
-	hcodec.SetHeaders(m, m)
+	// create a new message
+	m := &codec.Message{
+		Service: r.Service,
+		Method:  r.Method,
+		Header:  r.Header,
+	}
+
+	if m.Header == nil {
+		m.Header = map[string]string{}
+	}
+
+	hcodec.SetHeaders(m, r)
 
 	// the body being sent
 	var body []byte

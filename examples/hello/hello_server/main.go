@@ -5,7 +5,7 @@ import (
 
 	micro "github.com/fananchong/v-micro"
 	"github.com/fananchong/v-micro/common/log"
-	proto "github.com/fananchong/v-micro/examples/server/proto"
+	"github.com/fananchong/v-micro/examples/hello/proto"
 )
 
 // Greeter Greeter
@@ -20,7 +20,7 @@ func (s *Greeter) Hello(ctx context.Context, req *proto.Request, rsp *proto.Resp
 
 func main() {
 	service := micro.NewService(
-		micro.Name("greeter"),
+		micro.Name("hello_server"),
 	)
 
 	service.Init()

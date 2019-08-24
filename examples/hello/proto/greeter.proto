@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package mypackage;
+package proto;
 
 service Greeter {
 	rpc Hello(Request) returns (Response) {}

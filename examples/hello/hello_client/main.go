@@ -5,7 +5,7 @@ import (
 
 	micro "github.com/fananchong/v-micro"
 	"github.com/fananchong/v-micro/common/log"
-	proto "github.com/fananchong/v-micro/examples/server/proto"
+	"github.com/fananchong/v-micro/examples/hello/proto"
 )
 
 var service micro.Service
@@ -20,7 +20,7 @@ func (c *Greeter) Hello(ctx context.Context, rsp *proto.Response) {
 
 func test() (err error) {
 	// Use the generated client stub
-	cl := proto.NewGreeterService("greeter", new(Greeter), service.Client())
+	cl := proto.NewGreeterService("hello_server", new(Greeter), service.Client())
 
 	// Make request
 	err = cl.Hello(context.Background(), &proto.Request{
@@ -31,7 +31,7 @@ func test() (err error) {
 
 func main() {
 	service = micro.NewService(
-		micro.Name("client"),
+		micro.Name("hello_client"),
 		micro.AfterStart(test),
 	)
 
