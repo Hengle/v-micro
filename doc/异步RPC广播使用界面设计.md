@@ -11,6 +11,10 @@ package proto;
 service Say {
     rpc Hello(Request) returns (micro.NoReply) { option (micro.Broadcast) = true; }
 }
+
+message Request {
+    string name = 1;
+}
 ```
 
 - 必须 import broadcast.proto ，v-micro 扩展定义了 method option ,来标记一个方法是用来广播的
