@@ -42,6 +42,11 @@ func main() {
         Name: "John",
     })
 
+    // Broadcast request for all service
+    cl.BroadcastHello(context.Background(), &proto.Request{
+        Name: "John",
+    }, client.AllService())
+
     // Broadcast request with filter in [service greeter]
     cl.BroadcastHello(context.Background(), &proto.Request{
         Name: "John",
