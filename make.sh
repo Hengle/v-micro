@@ -34,7 +34,7 @@ case $cmd in
     coverage) coverage_test ;;
     coverhtml) coverage_test html ;;
     dep) go get -v golang.org/x/lint@$LINT_VER && cd $GOPATH/pkg/mod/golang.org/x/lint@$LINT_VER/ && go install ./... && cd $CUR_DIR ;;
-    build) go build $SRC_DIR/... ;;
+    build) export GOBIN=$SRC_DIR/bin && go install $SRC_DIR/... ;;
     *) echo 'This script is used to test, build, and publish go code'
        echo ''
        echo 'Usage:'
