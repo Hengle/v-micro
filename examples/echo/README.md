@@ -43,5 +43,5 @@
 库        | 同一主机                 | 同局域网内，多台云机       | 同局域网内，多台物理机   | 测试代码地址
 :---------|:-------------------------|:---------------------------|:-------------------------|:----------------
 v-micro   | 8.7w qps <br> 22.8% cpu  | 7.8w qps <br> 20.4% cpu    | 19.5w qps <br> 73.9% cpu | [echo](.)
-go-micro  | 待测稍后                 | 待测稍后                   | 待测稍后                 | 待测稍后
+go-micro  | 4w qps <br> 29.8% cpu    | 5.9w qps <br> 49.3% cpu    | 7.7w qps <br> 85.3% cpu  | https://github.com/fananchong/test_go-micro_qps
 gotcp     | 23w qps <br> 25.5% cpu   | 11w qps <br> 12% cpu       | 50w qps <br> 82% cpu     | https://github.com/fananchong/gotcp
