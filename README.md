@@ -31,7 +31,7 @@
 ## 例子
 
 - [hello](examples/hello) ，入门例子
-- [protobuf](tools/protoc-gen-vmicro/examples/greeter) ，protobuf 协议生成例子
+- [protobuf](examples/protobuf) ，protobuf 协议生成例子
 - [flags](examples/flags) ，命令行参数例子
 - [registry](examples/registry) ，服务发现例子
 - [echo](examples/echo) ，回显测试
@@ -45,12 +45,14 @@
 ## TODO
 
 - [异步 RPC 广播](doc/异步RPC广播使用界面设计.md)
-- Registry 新增插件: consul
+- Registry 新增插件： consul
 - Transport 新增插件： http
-- echo 回显测试，性能报告
-- 新增吞吐量测试，性能报告
+- 吞吐量测试，性能报告
 - 更多的例子
 - 更多的测试、单元测试
+- 回显测试性能优化
+  - 客户端回调中的 Request 对象目前由服务器传给客户端，多消耗网络流量与CPU消耗
+  - RPC 过程中减少分配内存，参考官方 RPC 实现
 
 
 ## 贡献

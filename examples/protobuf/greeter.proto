@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+import "micro/broadcast.proto";
+
+package proto;
+
+service Say {
+    rpc Hello(Request) returns (micro.NoReply) { option (micro.Broadcast) = true; }
+    rpc Ping(Request) returns (micro.NoReply) { }
+}
+
+message Request {
+    string name = 1;
+}

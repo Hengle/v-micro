@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/fananchong/gotcp v0.0.0-20190809093729-a577b08fcf31
+	github.com/fananchong/protoc-gen-vmicro v0.0.1
 	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.1.1
 	github.com/lestrrat-go/file-rotatelogs v2.2.0+incompatible

@@ -5,7 +5,7 @@
 
 ```protobuf
 syntax = "proto3";
-import "github.com/fananchong/v-micro/common/proto/broadcast.proto"
+import "micro/broadcast.proto";
 package proto;
 
 service Say {

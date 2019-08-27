@@ -4,6 +4,8 @@ github.com/fananchong/gotcp v0.0.0-20190809093729-a577b08fcf31 h1:dpdeTEp17MMaPU
 github.com/fananchong/gotcp v0.0.0-20190809093729-a577b08fcf31/go.mod h1:NwqSPUhE3lftRXXTbIYO3aSdkdQSs2gCGIZA4Mi1B6c=
 github.com/fananchong/mdns v0.3.1-0.20190816031422-53f87c9ecf9a82e2464601ef5305751a5da9b3ad h1:etYypIPe+tLrEN/f9rjyH1JTEqV/sO8ZUBCZaVPbokw=
 github.com/fananchong/mdns v0.3.1-0.20190816031422-53f87c9ecf9a82e2464601ef5305751a5da9b3ad/go.mod h1:KJ0dW7KmicXU2BV++qkLlmHYcVv7/hHnbtguSWt9Aoc=
+github.com/fananchong/protoc-gen-vmicro v0.0.1 h1:YHQYCIxSnhXb2M0U9EfzNJejZaMyKvo7XYOc/oNd76M=
+github.com/fananchong/protoc-gen-vmicro v0.0.1/go.mod h1:i2Gm1Z55kC/h9qcmzObh6ku0+ELZZDKX9u2UUpk/d/Q=
 github.com/gogo/protobuf v1.2.0 h1:xU6/SpYbvkNYiptHJYEDRseDLvYE7wSqhYYNy0QSUzI=
 github.com/gogo/protobuf v1.2.0/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
 github.com/golang/protobuf v1.3.2 h1:6nsPYzhq5kReh6QImI3k5qWzO4PEbvbIW2cwSfR/6xs=

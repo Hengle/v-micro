@@ -14,16 +14,16 @@
 
 - Windows
   ```shell
-  git clone https://github.com/fananchong/v-micro.git
-  cd v-micro
-  make.bat build
+  git clone https://github.com/fananchong/protoc-gen-vmicro.git
+  cd protoc-gen-vmicro
+  build.bat
   ```
 
 - Linux
   ```shell
-  git clone https://github.com/fananchong/v-micro.git
-  cd v-micro
-  make.sh build
+  git clone https://github.com/fananchong/protoc-gen-vmicro.git
+  cd protoc-gen-vmicro
+  build.sh
   ```
 
 protoc-gen-vmicro 在 bin 目录下
@@ -34,7 +34,7 @@ protoc-gen-vmicro 在 bin 目录下
 比如，拷贝 protoc 、 protoc-gen-vmicro 至本目录下。执行：
 
 ```shell
-protoc --proto_path=. --vmicro_out=. greeter.proto
+protoc -I. --vmicro_out=. greeter.proto
 ```
 
 即可生成 greeter.pb.go
