@@ -38,3 +38,7 @@ protoc -I. --vmicro_out=. greeter.proto
 ```
 
 即可生成 greeter.pb.go
+
+
+如果帶有 broadcast 选项的，参考 g.bat 、 g.sh
+
