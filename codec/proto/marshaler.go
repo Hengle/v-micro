@@ -1,6 +1,7 @@
 package proto
 
 import (
+	"github.com/fananchong/v-micro/codec"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -16,4 +17,9 @@ func (marshalerImpl) Unmarshal(data []byte, v interface{}) error {
 
 func (marshalerImpl) String() string {
 	return "proto"
+}
+
+// NewMarshaler new
+func NewMarshaler() codec.Marshaler {
+	return &marshalerImpl{}
 }

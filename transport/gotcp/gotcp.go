@@ -107,7 +107,7 @@ func (listener *listenerImpl) Close() (err error) {
 
 func (listener *listenerImpl) Accept(fn func(transport.Socket)) (err error) {
 	listener.RegisterSessType(socketImpl{})
-	listener.Server.Accept(func(sock interface{}) {
+	_ = listener.Server.Accept(func(sock interface{}) {
 		s := sock.(*socketImpl)
 		s.Verify()
 		fn(s)

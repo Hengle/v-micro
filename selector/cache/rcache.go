@@ -91,28 +91,26 @@ func (c *cache) updateCache(service string) {
 			return
 		}
 
-		select {
-		case <-time.After(DefaultTTL):
-			// ask the registry
-			newservices, err := c.Registry.GetService(service)
-			if err != nil {
-				log.Error(err)
-				continue
-			}
-
-			func() {
-				c.Lock()
-				defer c.Unlock()
-
-				// delete invaild node
-				c.deleteOldNode(service, newservices)
-
-				// update vaild node
-				for _, s := range newservices {
-					c.update(&registry.Result{Action: "update", Service: s}, false)
-				}
-			}()
+		<-time.After(DefaultTTL)
+		// ask the registry
+		newservices, err := c.Registry.GetService(service)
+		if err != nil {
+			log.Error(err)
+			continue
 		}
+
+		func() {
+			c.Lock()
+			defer c.Unlock()
+
+			// delete invaild node
+			c.deleteOldNode(service, newservices)
+
+			// update vaild node
+			for _, s := range newservices {
+				c.update(&registry.Result{Action: "update", Service: s}, false)
+			}
+		}()
 	}
 }
 

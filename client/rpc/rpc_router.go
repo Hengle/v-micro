@@ -35,7 +35,6 @@ type service struct {
 
 // router represents an RPC router.
 type router struct {
-	name       string
 	serviceMap sync.Map
 }
 
@@ -115,9 +114,7 @@ func (s *service) call(ctx context.Context, router *router, mtype *methodType, a
 	}
 
 	// execute handler
-	fn(ctx, argv.Interface(), replyv.Interface())
-
-	return nil
+	return fn(ctx, argv.Interface(), replyv.Interface())
 }
 
 func (m *methodType) prepareContext(ctx context.Context) reflect.Value {
