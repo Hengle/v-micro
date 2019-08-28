@@ -42,20 +42,10 @@ func main() {
         Name: "John",
     })
 
-    // Broadcast request for all service
-    cl.BroadcastHello(context.Background(), &proto.Request{
-        Name: "John",
-    }, client.AllService())
-
     // Broadcast request with filter in [service greeter]
     cl.BroadcastHello(context.Background(), &proto.Request{
         Name: "John",
     }, Filter("latest"))
-
-    // Broadcast request with filter in [all service]
-    cl.BroadcastHello(context.Background(), &proto.Request{
-        Name: "John",
-    }, Filter("latest"), client.AllService())
 }
 
 // Filter will filter the version of the service ( for example)
@@ -78,3 +68,4 @@ func Filter(v string) client.CallOption {
 
 - NewSayService 、 BroadcastHello 方法通过 protoc_gen_vmicro 自动生成
 - Filter 方法仅为例子演示
+- 给所有不同类型的微服务广播消息，暂时不做
