@@ -11,28 +11,11 @@ export GOPROXY=https://goproxy.io
 export GOPATH=~/go
 export GOBIN=~/go/bin
 
-# Code coverage generation
-function coverage_test(){
-    COVERAGE_DIR="${COVERAGE_DIR:-coverage}"
-    mkdir -p "$COVERAGE_DIR";
-    for package in $(go list $SRC_DIR/...); do
-        go test -race -covermode=atomic -coverprofile "${COVERAGE_DIR}/${package##*/}.cov" "$package" ;
-    done ;
-    echo 'mode: count' > "${COVERAGE_DIR}"/coverage.cov ;
-    tail -q -n +2 "${COVERAGE_DIR}"/*.cov >> "${COVERAGE_DIR}"/coverage.cov ;
-    go tool cover -func="${COVERAGE_DIR}"/coverage.cov ;
-    if [ "$1" == "html" ]; then
-        go tool cover -html="${COVERAGE_DIR}"/coverage.cov -o coverage.html ;
-    fi
-    rm -rf "$COVERAGE_DIR";
-}
-
 case $cmd in
     lint) $0 dep && $GOBIN/golint -set_exit_status $(go list $SRC_DIR/...) ;;
     test) go test -short $(go list $SRC_DIR/...) ;;
-    race) go test -race $(go list $SRC_DIR/...) -coverprofile=coverage.txt -covermode=atomic ;;
-    coverage) coverage_test ;;
-    coverhtml) coverage_test html ;;
+    race) go test -race $(go list $SRC_DIR/...) -coverprofile=coverage.cov -covermode=atomic ;;
+    coverage) rm -rf coverage.cov && go test -race $(go list $SRC_DIR/...) -coverprofile=coverage.cov -covermode=atomic ;;
     dep) go get -v golang.org/x/lint@$LINT_VER && cd $GOPATH/pkg/mod/golang.org/x/lint@$LINT_VER/ && go install ./... && cd $CUR_DIR ;;
     build) export GOBIN=$SRC_DIR/bin && go install $SRC_DIR/... ;;
     *) echo 'This script is used to test, build, and publish go code'
@@ -51,4 +34,3 @@ case $cmd in
 esac
 
 cd $CUR_DIR
-
