@@ -16,6 +16,7 @@ type Client interface {
 	Handle(interface{}) error
 	NewRequest(service, method string, req interface{}) Request
 	Call(ctx context.Context, req Request, opts ...CallOption) error
+	Broadcast(ctx context.Context, req Request, opts ...CallOption)
 	String() string
 }
 

@@ -168,6 +168,43 @@ func (r *rpcClient) Call(ctx context.Context, request client.Request, opts ...cl
 	return
 }
 
+func (r *rpcClient) Broadcast(ctx context.Context, request client.Request, opts ...client.CallOption) {
+	// make a copy of call opts
+	callOpts := r.opts.CallOptions
+	for _, opt := range opts {
+		opt(&callOpts)
+	}
+
+	opt := client.WithSelectOption(selector.WithStrategy(selector.StatefulRoundRobin))
+	opt(&callOpts)
+
+	next, err := r.next(request, callOpts)
+	if err != nil {
+		log.Error(err)
+	}
+
+	// make copy of call method
+	rcall := r.call
+
+	// wrap the call in reverse
+	for i := len(callOpts.CallWrappers); i > 0; i-- {
+		rcall = callOpts.CallWrappers[i-1](rcall)
+	}
+
+	for {
+		if node, _ := next(); node != nil {
+			// make the call
+			if err := rcall(ctx, node, request, callOpts); err != nil {
+				log.Error(err)
+			}
+		} else {
+			break
+		}
+	}
+
+	return
+}
+
 func (r *rpcClient) String() string {
 	return "rpc"
 }
