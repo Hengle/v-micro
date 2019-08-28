@@ -24,5 +24,8 @@ jobs:
             dep ensure
         fi
 
-    - name: Build
-      run: go build -v .
+    - name: Build,Test
+      run: |
+        golint -set_exit_status ./...
+        go build -v ./...
+        go test -race ./... -coverprofile=coverage.cov -covermode=atomic
