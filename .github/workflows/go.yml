@@ -18,15 +18,11 @@ jobs:
 
     - name: Get dependencies
       run: |
-        go get -v golang.org/x/lint
         go get -v -t -d ./...
-        if [ -f Gopkg.toml ]; then
-            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-            dep ensure
-        fi
+        curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $GOPATH/bin
 
     - name: Build,Test
       run: |
-        golint -set_exit_status ./...
+        golangci-lint run
         go build -v ./...
         go test -race ./... -coverprofile=coverage.cov -covermode=atomic
