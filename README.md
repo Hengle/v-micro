@@ -35,6 +35,8 @@
 - [flags](examples/flags) ，命令行参数例子
 - [registry](examples/registry) ，服务发现例子
 - [echo](examples/echo) ，回显测试
+- [broadcast](examples/broadcast) ，广播消息例子
+- [metadata](examples/metadata) ，客户端元数据、服务器端元数据例子
 
 ## 基准测试
 
