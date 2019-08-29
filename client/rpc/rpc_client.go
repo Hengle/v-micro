@@ -92,9 +92,7 @@ func (r *rpcClient) Init(opts ...client.Option) error {
 	connectorOpts := []connector.Option{
 		connector.OnConnected(r.AsyncRecv),
 	}
-	r.opts.Connector.Init(connectorOpts...)
-
-	return nil
+	return r.opts.Connector.Init(connectorOpts...)
 }
 
 func (r *rpcClient) Options() client.Options {
@@ -209,8 +207,6 @@ func (r *rpcClient) Broadcast(ctx context.Context, request client.Request, opts 
 			break
 		}
 	}
-
-	return
 }
 
 func (r *rpcClient) String() string {

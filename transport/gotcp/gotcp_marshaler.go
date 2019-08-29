@@ -108,15 +108,6 @@ func unmarshalString2(buf []byte, offset *int, maxLen int) (string, bool) {
 	return unmarshalString(buf, offset, int(needLen), maxLen)
 }
 
-func unmarshalSliceByte(buf []byte, offset *int, needLen, maxLen int) ([]byte, bool) {
-	if *offset+needLen > maxLen {
-		return []byte{}, false
-	}
-	s := buf[*offset : *offset+needLen]
-	*offset = *offset + needLen
-	return s, true
-}
-
 func marshalUint16(buf []byte, offset *int, value uint16) bool {
 	needLen := 2
 	if *offset+needLen > len(buf) {

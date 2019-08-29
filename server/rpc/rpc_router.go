@@ -42,7 +42,6 @@ type service struct {
 
 // router represents an RPC router.
 type router struct {
-	name         string
 	serviceMap   sync.Map
 	hdlrWrappers []server.HandlerWrapper
 }

@@ -89,7 +89,7 @@ func (m *mdnsRegistry) Register(service *registry.Service, opts ...registry.Regi
 			return err
 		}
 
-		srv, err := mdns.NewServer(&mdns.Config{Zone: &mdns.DNSSDService{s}, Port: mdnsPort})
+		srv, err := mdns.NewServer(&mdns.Config{Zone: &mdns.DNSSDService{MDNSService: s}, Port: mdnsPort})
 		if err != nil {
 			log.Error(err)
 			return err
@@ -126,7 +126,7 @@ func (m *mdnsRegistry) Register(service *registry.Service, opts ...registry.Regi
 			// hash doesn't match, shutdown
 		} else if seen {
 			log.Infof("id:%s, node hash:%s, old hash:%s. node will restart ...", node.ID, h, e.hash)
-			e.node.Shutdown()
+			_ = e.node.Shutdown()
 			// doesn't exist
 		} else {
 			e = &mdnsEntry{hash: h}
@@ -199,7 +199,7 @@ func (m *mdnsRegistry) Deregister(service *registry.Service) error {
 
 		for _, node := range service.Nodes {
 			if node.ID == entry.id {
-				entry.node.Shutdown()
+				_ = entry.node.Shutdown()
 				remove = true
 				break
 			}
@@ -213,7 +213,7 @@ func (m *mdnsRegistry) Deregister(service *registry.Service) error {
 
 	// last entry is the wildcard for list queries. Remove it.
 	if len(newEntries) == 1 && newEntries[0].id == "*" {
-		newEntries[0].node.Shutdown()
+		_ = newEntries[0].node.Shutdown()
 		delete(m.services, service.Name)
 	} else {
 		m.services[service.Name] = newEntries
@@ -229,7 +229,8 @@ func (m *mdnsRegistry) GetService(service string) ([]*registry.Service, error) {
 
 	p := mdns.DefaultParams(service)
 	// set context with timeout
-	p.Context, _ = context.WithTimeout(context.Background(), m.opts.Timeout)
+	var cancel context.CancelFunc
+	p.Context, cancel = context.WithTimeout(context.Background(), m.opts.Timeout)
 	// set entries channel
 	p.Entries = entries
 
@@ -273,6 +274,7 @@ func (m *mdnsRegistry) GetService(service string) ([]*registry.Service, error) {
 
 				serviceMap[txt.Version] = s
 			case <-p.Context.Done():
+				cancel()
 				close(done)
 				return
 			}
@@ -305,7 +307,8 @@ func (m *mdnsRegistry) ListServices() ([]*registry.Service, error) {
 
 	p := mdns.DefaultParams("_services")
 	// set context with timeout
-	p.Context, _ = context.WithTimeout(context.Background(), m.opts.Timeout)
+	var cancel context.CancelFunc
+	p.Context, cancel = context.WithTimeout(context.Background(), m.opts.Timeout)
 	// set entries channel
 	p.Entries = entries
 
@@ -325,6 +328,7 @@ func (m *mdnsRegistry) ListServices() ([]*registry.Service, error) {
 					services = append(services, &registry.Service{Name: name})
 				}
 			case <-p.Context.Done():
+				cancel()
 				close(done)
 				return
 			}

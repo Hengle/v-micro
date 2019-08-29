@@ -495,7 +495,11 @@ func (c *cmd) Init(opts ...Option) error {
 	c.app.Usage = c.opts.Description
 	c.app.Flags = append(c.app.Flags, c.opts.Flags...)
 	c.app.Action = c.opts.Action
-	c.app.RunAndExitOnError()
+
+	if err := c.app.Run(os.Args); err != nil {
+		log.Fatal(err)
+	}
+
 	return nil
 }
 

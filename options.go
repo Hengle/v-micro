@@ -76,24 +76,24 @@ func Registry(r registry.Registry) Option {
 	return func(o *Options) {
 		o.Registry = r
 		// Update Client and Server
-		o.Client.Init(client.Registry(r))
-		o.Server.Init(server.Registry(r))
+		_ = o.Client.Init(client.Registry(r))
+		_ = o.Server.Init(server.Registry(r))
 		// Update Selector
-		o.Client.Options().Selector.Init(selector.Registry(r))
+		_ = o.Client.Options().Selector.Init(selector.Registry(r))
 	}
 }
 
 // Selector sets the selector for the service client
 func Selector(s selector.Selector) Option {
 	return func(o *Options) {
-		o.Client.Init(client.Selector(s))
+		_ = o.Client.Init(client.Selector(s))
 	}
 }
 
 // Connector sets the connector for the service client
 func Connector(ct connector.Connector) Option {
 	return func(o *Options) {
-		o.Client.Init(client.Connector(ct))
+		_ = o.Client.Init(client.Connector(ct))
 	}
 }
 
@@ -103,9 +103,9 @@ func Transport(t transport.Transport) Option {
 	return func(o *Options) {
 		o.Transport = t
 		// Update Client and Server
-		o.Client.Init(client.Transport(t))
-		o.Server.Init(server.Transport(t))
-		o.Client.Options().Connector.Init(connector.Transport(t))
+		_ = o.Client.Init(client.Transport(t))
+		_ = o.Server.Init(server.Transport(t))
+		_ = o.Client.Options().Connector.Init(connector.Transport(t))
 	}
 }
 
@@ -114,28 +114,28 @@ func Transport(t transport.Transport) Option {
 // Address sets the address of the server
 func Address(addr string) Option {
 	return func(o *Options) {
-		o.Server.Init(server.Address(addr))
+		_ = o.Server.Init(server.Address(addr))
 	}
 }
 
 // Name of the service
 func Name(n string) Option {
 	return func(o *Options) {
-		o.Server.Init(server.Name(n))
+		_ = o.Server.Init(server.Name(n))
 	}
 }
 
 // Version of the service
 func Version(v string) Option {
 	return func(o *Options) {
-		o.Server.Init(server.Version(v))
+		_ = o.Server.Init(server.Version(v))
 	}
 }
 
 // Metadata associated with the service
 func Metadata(md map[string]string) Option {
 	return func(o *Options) {
-		o.Server.Init(server.Metadata(md))
+		_ = o.Server.Init(server.Metadata(md))
 	}
 }
 
@@ -156,14 +156,14 @@ func Action(a func(*cli.Context)) Option {
 // RegisterTTL specifies the TTL to use when registering the service
 func RegisterTTL(t time.Duration) Option {
 	return func(o *Options) {
-		o.Server.Init(server.RegisterTTL(t))
+		_ = o.Server.Init(server.RegisterTTL(t))
 	}
 }
 
 // RegisterInterval specifies the interval on which to re-register
 func RegisterInterval(t time.Duration) Option {
 	return func(o *Options) {
-		o.Server.Init(server.RegisterInterval(t))
+		_ = o.Server.Init(server.RegisterInterval(t))
 	}
 }
 
@@ -182,7 +182,7 @@ func WrapClient(w ...client.Wrapper) Option {
 // WrapCall is a convenience method for wrapping a Client CallFunc
 func WrapCall(w ...client.CallWrapper) Option {
 	return func(o *Options) {
-		o.Client.Init(client.WrapCall(w...))
+		_ = o.Client.Init(client.WrapCall(w...))
 	}
 }
 
@@ -196,7 +196,7 @@ func WrapHandler(w ...server.HandlerWrapper) Option {
 		}
 
 		// Init once
-		o.Server.Init(wrappers...)
+		_ = o.Server.Init(wrappers...)
 	}
 }
 
