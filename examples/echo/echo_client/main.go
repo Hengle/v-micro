@@ -32,7 +32,7 @@ func start() (err error) {
 	cl = proto.NewEchoService("echo_server", new(Echo), service.Client())
 
 	// Make request
-	err = cl.Echo(context.Background(), &proto.Request{
+	_ = cl.Echo(context.Background(), &proto.Request{
 		Num: uint32(r.Int31n(1000)),
 	})
 	return

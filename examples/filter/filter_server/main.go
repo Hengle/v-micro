@@ -6,7 +6,6 @@ import (
 
 	micro "github.com/fananchong/v-micro"
 	"github.com/fananchong/v-micro/common/log"
-	"github.com/fananchong/v-micro/common/metadata"
 	"github.com/fananchong/v-micro/examples/hello/proto"
 )
 
@@ -15,17 +14,14 @@ type Greeter struct{}
 
 // Hello Greeter.Hello
 func (s *Greeter) Hello(ctx context.Context, req *proto.Request, rsp *proto.Response) error {
-	md, _ := metadata.FromContext(ctx)
-	rsp.Msg = fmt.Sprintf("Hello %s, Account:%s, ID:%s", req.Name, md["Account"], md["ID"])
+	log.Infof("Received Greeter.Hello request. Name:%s", req.Name)
+	rsp.Msg = fmt.Sprintf("Hello %s", req.Name)
 	return nil
 }
 
 var service micro.Service
 
 func beforeStart() error {
-	// 服务器元数据，会通过 Registry 组件，发布。可以在 Selector 组件中给 Filter 使用
-	// 更详细例子，看后续的 Selector 或 Filter 例子
-	// 这里仅演示下，如何设置服务器元数据
 	md := service.Server().Options().Metadata
 	md["SERVER_ID"] = service.Server().Options().ID
 	return nil
@@ -33,7 +29,7 @@ func beforeStart() error {
 
 func main() {
 	service = micro.NewService(
-		micro.Name("metadata_server"),
+		micro.Name("filter_server"),
 		micro.BeforeStart(beforeStart),
 	)
 

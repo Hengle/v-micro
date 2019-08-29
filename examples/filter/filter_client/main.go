@@ -4,8 +4,10 @@ import (
 	"context"
 
 	micro "github.com/fananchong/v-micro"
+	"github.com/fananchong/v-micro/client"
 	"github.com/fananchong/v-micro/common/log"
 	"github.com/fananchong/v-micro/examples/hello/proto"
+	"github.com/fananchong/v-micro/selector"
 )
 
 var service micro.Service
@@ -18,21 +20,25 @@ func (c *Greeter) Hello(ctx context.Context, req *proto.Request, rsp *proto.Resp
 	log.Infof("Received Greeter.Hello Response:%s", rsp.GetMsg())
 }
 
-func test() (err error) {
+func start() (err error) {
 	// Use the generated client stub
-	cl := proto.NewGreeterService("hello_server", new(Greeter), service.Client())
+	cl := proto.NewGreeterService("filter_server", new(Greeter), service.Client())
+
+	callOptions := []client.CallOption{client.WithSelectOption(
+		selector.WithFilter(selector.FilterLabel("SERVER_ID", "2")),
+	)}
 
 	// Make request
 	_ = cl.Hello(context.Background(), &proto.Request{
 		Name: "John",
-	})
+	}, callOptions...)
 	return
 }
 
 func main() {
 	service = micro.NewService(
-		micro.Name("hello_client"),
-		micro.AfterStart(test),
+		micro.Name("filter_client"),
+		micro.AfterStart(start),
 	)
 
 	service.Init()

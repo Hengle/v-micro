@@ -16,7 +16,7 @@ func start() (err error) {
 	cl = proto.NewSayService("broadcast_server", new(Say), service.Client())
 
 	// Make request
-	err = cl.Ping(context.Background(), &proto.Request{
+	_ = cl.Ping(context.Background(), &proto.Request{
 		Name: "ABC",
 	})
 

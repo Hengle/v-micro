@@ -110,7 +110,6 @@ func (r *rpcClient) next(request client.Request, opts client.CallOptions) (selec
 	next, err := r.opts.Selector.Select(service, opts.SelectOptions...)
 	if err != nil {
 		err = fmt.Errorf("service %s: %v", service, err.Error())
-		log.Error(err)
 		return nil, err
 	}
 
@@ -186,7 +185,7 @@ func (r *rpcClient) Broadcast(ctx context.Context, request client.Request, opts 
 
 	next, err := r.next(request, callOpts)
 	if err != nil {
-		log.Error(err)
+		return
 	}
 
 	// make copy of call method

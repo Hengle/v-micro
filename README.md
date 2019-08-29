@@ -37,6 +37,8 @@
 - [echo](examples/echo) ，回显测试
 - [broadcast](examples/broadcast) ，广播消息例子
 - [metadata](examples/metadata) ，客户端元数据、服务器端元数据例子
+- [filter](examples/filter) ，过滤器例子
+
 
 ## 基准测试
 
@@ -52,6 +54,7 @@
 - 回显测试性能优化
   - 客户端回调中的 Request 对象目前由服务器传给客户端，多消耗网络流量与CPU消耗
   - RPC 过程中减少分配内存，参考官方 RPC 实现
+  - 精简每次通信中的默认元数据，绝大部分不会被用到，白白暂流量
 
 
 ## 贡献

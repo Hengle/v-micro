@@ -30,7 +30,7 @@ func start() (err error) {
 	})
 
 	// Make request
-	err = cl.Hello(ctx, &proto.Request{
+	_ = cl.Hello(ctx, &proto.Request{
 		Name: "John",
 	})
 	return

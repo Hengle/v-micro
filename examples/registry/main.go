@@ -14,9 +14,6 @@ func test() (err error) {
 	if _, err = slt.Select("reg"); err != nil {
 		log.Fatal(err)
 	}
-	if _, err = slt.Select("reg"); err != nil {
-		log.Fatal(err)
-	}
 	return
 }
 
