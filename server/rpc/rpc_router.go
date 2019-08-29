@@ -121,6 +121,10 @@ func prepareMethod(method reflect.Method) *methodType {
 }
 
 func (router *router) sendResponse(r *rpcRequest, reply interface{}, cc codec.Writer) error {
+	h := r.Header()
+	if _, ok := h["Micro-Broadcast"]; ok {
+		return nil
+	}
 	var msg codec.Message
 	msg.Service = r.Service()
 	msg.Method = r.Method()

@@ -178,6 +178,14 @@ func (r *rpcClient) Broadcast(ctx context.Context, request client.Request, opts 
 	opt := client.WithSelectOption(selector.WithStrategy(selector.StatefulRoundRobin))
 	opt(&callOpts)
 
+	if md, ok := metadata.FromContext(ctx); ok {
+		md["Micro-Broadcast"] = "true"
+	} else {
+		md := make(metadata.Metadata)
+		md["Micro-Broadcast"] = "true"
+		ctx = metadata.NewContext(ctx, md)
+	}
+
 	next, err := r.next(request, callOpts)
 	if err != nil {
 		log.Error(err)

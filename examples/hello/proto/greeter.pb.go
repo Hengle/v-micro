@@ -6,11 +6,15 @@ package proto
 import (
 	context "context"
 	fmt "fmt"
+	micro "github.com/fananchong/protoc-gen-vmicro/micro"
 	client "github.com/fananchong/v-micro/client"
 	server "github.com/fananchong/v-micro/server"
 	proto "github.com/golang/protobuf/proto"
 	math "math"
 )
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ micro.NoReply
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
