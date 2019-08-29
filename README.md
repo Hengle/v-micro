@@ -40,11 +40,8 @@
 
 - [回显测试报告](examples/echo/README.md)
 
-
-
 ## TODO
 
-- [异步 RPC 广播](doc/异步RPC广播使用界面设计.md)
 - Registry 新增插件： consul
 - Transport 新增插件： http
 - 吞吐量测试，性能报告

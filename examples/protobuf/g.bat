@@ -1,5 +1,8 @@
+REM download protoc
+REM download protoc-gen-vmicro
+
 set GOPROXY=https://goproxy.io
-go get -u github.com/fananchong/protoc-gen-vmicro
+go get github.com/fananchong/protoc-gen-vmicro
 go get github.com/golang/protobuf
 go list -m -f "{{.Dir}}" github.com/fananchong/protoc-gen-vmicro > temp
 set /P DEP1=<temp

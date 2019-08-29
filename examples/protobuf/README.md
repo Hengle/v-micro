@@ -13,32 +13,28 @@
 ## protoc-gen-vmicro
 
 - Windows
-  ```shell
-  git clone https://github.com/fananchong/protoc-gen-vmicro.git
-  cd protoc-gen-vmicro
-  build.bat
-  ```
+  - https://github.com/fananchong/protoc-gen-vmicro/releases/download/v1.0.0/protoc-gen-vmicro.exe
 
 - Linux
-  ```shell
-  git clone https://github.com/fananchong/protoc-gen-vmicro.git
-  cd protoc-gen-vmicro
-  build.sh
-  ```
-
-protoc-gen-vmicro 在 bin 目录下
+  - https://github.com/fananchong/protoc-gen-vmicro/releases/download/v1.0.0/protoc-gen-vmicro
 
 
 ## 生成 pb.go 文件
 
 比如，拷贝 protoc 、 protoc-gen-vmicro 至本目录下。执行：
 
-```shell
-protoc -I. --vmicro_out=. greeter.proto
-```
+- Windows
+    ```shell
+    protoc -I. --vmicro_out=. greeter.proto
+    ```
+
+- Linux
+    ```shell
+    export PATH=$PATH:$PWD
+    protoc -I. --vmicro_out=. greeter.proto
+    ```
 
 即可生成 greeter.pb.go
 
 
-如果帶有 broadcast 选项的，参考 g.bat 、 g.sh
-
+如果带有 broadcast 选项的，参考 g.bat 、 g.sh
