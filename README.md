@@ -38,6 +38,7 @@
 - [broadcast](examples/broadcast) ，广播消息例子
 - [metadata](examples/metadata) ，客户端元数据、服务器端元数据例子
 - [filter](examples/filter) ，过滤器例子
+- [wrapper](examples/wrapper) ，客户端、服务器端包装器例子
 
 
 ## 基准测试
