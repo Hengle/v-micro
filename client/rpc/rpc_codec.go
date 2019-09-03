@@ -20,6 +20,7 @@ type rpcCodec struct {
 var (
 	// DefaultCodecs default codecs
 	DefaultCodecs = map[string]codec.NewCodec{
+		"":                     proto.NewCodec, // default
 		"application/protobuf": proto.NewCodec,
 	}
 )

@@ -28,20 +28,11 @@ func (r *rpcClient) asyncRecv(nodeID string, cli transport.Client) {
 			hdr[k] = v
 		}
 
-		// set local/remote ips
-		hdr["Local"] = cli.Local()
-		hdr["Remote"] = cli.Remote()
-
 		// create new context
 		ctx := metadata.NewContext(context.Background(), hdr)
 
 		// we use this Content-Type header to identify the codec needed
-		ct := msg.Header["Content-Type"]
-		// no content type
-		if len(ct) == 0 {
-			msg.Header["Content-Type"] = r.Options().ContentType
-			ct = r.Options().ContentType
-		}
+		ct := msg.Header[metadata.CONTENTTYPE]
 		var cf codec.NewCodec
 		var err error
 		if cf, err = r.newCodec(ct); err != nil {
@@ -54,8 +45,7 @@ func (r *rpcClient) asyncRecv(nodeID string, cli transport.Client) {
 
 		// internal request
 		request := &rpcRequest{
-			service:     hcodec.GetHeader("Micro-Service", msg.Header),
-			method:      hcodec.GetHeader("Micro-Method", msg.Header),
+			method:      hcodec.GetHeader(metadata.METHOD, msg.Header),
 			contentType: ct,
 			codec:       []codec.Codec{rcodec0, rcodec1},
 		}

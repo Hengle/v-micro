@@ -238,20 +238,11 @@ func (s *rpcServer) serveConn(sock transport.Socket) {
 			hdr[k] = v
 		}
 
-		// set local/remote ips
-		hdr["Local"] = sock.Local()
-		hdr["Remote"] = sock.Remote()
-
 		// create new context
 		ctx := metadata.NewContext(context.Background(), hdr)
 
 		// we use this Content-Type header to identify the codec needed
-		ct := msg.Header["Content-Type"]
-		// no content type
-		if len(ct) == 0 {
-			msg.Header["Content-Type"] = defaultContentType
-			ct = defaultContentType
-		}
+		ct := msg.Header[metadata.CONTENTTYPE]
 		var cf codec.NewCodec
 		var err error
 		if cf, err = s.newCodec(ct); err != nil {
@@ -263,8 +254,7 @@ func (s *rpcServer) serveConn(sock transport.Socket) {
 
 		// internal request
 		request := &rpcRequest{
-			service:     hcodec.GetHeader("Micro-Service", msg.Header),
-			method:      hcodec.GetHeader("Micro-Method", msg.Header),
+			method:      hcodec.GetHeader(metadata.METHOD, msg.Header),
 			contentType: ct,
 			codec:       rcodec,
 			header:      msg.Header,

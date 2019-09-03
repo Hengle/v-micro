@@ -15,8 +15,6 @@ type Server interface {
 
 // Request is a synchronous request interface
 type Request interface {
-	// Service name requested
-	Service() string
 	// The action requested
 	Method() string
 	// Content type provided

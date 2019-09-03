@@ -52,9 +52,8 @@ func (r *rpcClient) newCodec(contentType string) (codec.NewCodec, error) {
 
 func (r *rpcClient) call(ctx context.Context, node *registry.Node, req client.Request, opts client.CallOptions) (err error) {
 	msg := &codec.Message{
-		Service: req.Service(),
-		Method:  req.Method(),
-		Header:  make(map[string]string),
+		Method: req.Method(),
+		Header: make(map[string]string),
 	}
 
 	md, ok := metadata.FromContext(ctx)
@@ -65,7 +64,7 @@ func (r *rpcClient) call(ctx context.Context, node *registry.Node, req client.Re
 	}
 
 	// set the content type for the request
-	msg.Header["Content-Type"] = req.ContentType()
+	msg.Header[metadata.CONTENTTYPE] = req.ContentType()
 
 	var cf codec.NewCodec
 	if cf, err = r.newCodec(req.ContentType()); err != nil {

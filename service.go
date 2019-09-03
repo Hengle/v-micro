@@ -7,7 +7,6 @@ import (
 	"syscall"
 
 	"github.com/fananchong/v-micro/client"
-	"github.com/fananchong/v-micro/common/metadata"
 	"github.com/fananchong/v-micro/server"
 	cmd "github.com/fananchong/v-micro/service"
 )
@@ -71,9 +70,6 @@ func (s *service) Init(opts ...Option) {
 
 	s.opts.Client = &cmd.ClientWrapper{
 		Client: s.opts.Client,
-		Headers: metadata.Metadata{
-			"Micro-From-Service": s.opts.Server.Options().Name,
-		},
 	}
 }
 

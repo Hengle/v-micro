@@ -5,9 +5,6 @@ import (
 	"github.com/fananchong/v-micro/common/log"
 )
 
-// defaultContentType default content type
-var defaultContentType = "application/protobuf"
-
 // InitOptions new
 func InitOptions(options *client.Options, opts ...client.Option) {
 	for _, o := range opts {
@@ -28,9 +25,5 @@ func InitOptions(options *client.Options, opts ...client.Option) {
 
 	if options.Connector == nil {
 		log.Fatal("Init fail. Connector is nil.")
-	}
-
-	if len(options.ContentType) == 0 {
-		options.ContentType = defaultContentType
 	}
 }

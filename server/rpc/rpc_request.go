@@ -5,7 +5,6 @@ import (
 )
 
 type rpcRequest struct {
-	service     string
 	method      string
 	contentType string
 	codec       codec.Codec
@@ -20,10 +19,6 @@ func (r *rpcRequest) Codec() codec.Reader {
 
 func (r *rpcRequest) ContentType() string {
 	return r.contentType
-}
-
-func (r *rpcRequest) Service() string {
-	return r.service
 }
 
 func (r *rpcRequest) Method() string {

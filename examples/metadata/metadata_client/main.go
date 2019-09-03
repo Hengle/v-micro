@@ -16,6 +16,10 @@ type Greeter struct{}
 
 // Hello Greeter.Hello
 func (c *Greeter) Hello(ctx context.Context, req *proto.Request, rsp *proto.Response) {
+	md, _ := metadata.FromContext(ctx)
+	for k, v := range md {
+		log.Infof("k: %s, v: %s", k, v)
+	}
 	log.Infof("Received Greeter.Hello Response:%s", rsp.GetMsg())
 }
 

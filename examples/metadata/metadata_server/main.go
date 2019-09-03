@@ -16,6 +16,9 @@ type Greeter struct{}
 // Hello Greeter.Hello
 func (s *Greeter) Hello(ctx context.Context, req *proto.Request, rsp *proto.Response) error {
 	md, _ := metadata.FromContext(ctx)
+	for k, v := range md {
+		log.Infof("k: %s, v: %s", k, v)
+	}
 	rsp.Msg = fmt.Sprintf("Hello %s, Account:%s, ID:%s", req.Name, md["Account"], md["ID"])
 	return nil
 }

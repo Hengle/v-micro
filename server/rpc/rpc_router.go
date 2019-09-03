@@ -17,6 +17,7 @@ import (
 
 	"github.com/fananchong/v-micro/codec"
 	"github.com/fananchong/v-micro/common/log"
+	"github.com/fananchong/v-micro/common/metadata"
 	"github.com/fananchong/v-micro/server"
 )
 
@@ -125,11 +126,10 @@ func (router *router) sendResponse(r *rpcRequest, reply interface{}, cc codec.Wr
 		return nil
 	}
 	var msg codec.Message
-	msg.Service = r.Service()
 	msg.Method = r.Method()
 	msg.Header = make(map[string]string)
 	msg.Header["Micro-RD"] = string(r.BodyData())
-	msg.Header["Content-Type"] = r.ContentType()
+	msg.Header[metadata.CONTENTTYPE] = r.ContentType()
 	err := cc.Write(&msg, reply)
 	return err
 }
