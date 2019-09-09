@@ -3,12 +3,18 @@ package rpc
 import (
 	"context"
 
+	"github.com/fananchong/v-micro/client"
 	"github.com/fananchong/v-micro/codec"
 	"github.com/fananchong/v-micro/common/log"
 	"github.com/fananchong/v-micro/common/metadata"
 	hcodec "github.com/fananchong/v-micro/internal/codec"
 	"github.com/fananchong/v-micro/transport"
 )
+
+type requestInfo struct {
+	nodeID string
+	req    client.Request
+}
 
 func (r *rpcClient) AsyncRecv(nodeID string, cli transport.Client) {
 	go r.asyncRecv(nodeID, cli)
@@ -40,20 +46,29 @@ func (r *rpcClient) asyncRecv(nodeID string, cli transport.Client) {
 			continue
 		}
 
-		rcodec0 := newRPCCodec(msg.Body, cli, cf)
-		rcodec1 := newRPCCodec([]byte(hcodec.GetHeader("Micro-RD", msg.Header)), cli, cf)
+		rcodec := newRPCCodec(msg.Body, cli, cf)
 
-		// internal request
-		request := &rpcRequest{
-			method:      hcodec.GetHeader(metadata.METHOD, msg.Header),
-			contentType: ct,
-			codec:       []codec.Codec{rcodec0, rcodec1},
-		}
-
-		// serve the actual request using the request router
-		if err := r.router.ServeRequest(ctx, request); err != nil {
-			log.Error(err)
-			continue
+		id := hcodec.GetHeader(metadata.MSGID, msg.Header)
+		if request, ok := r.requests.Load(id); ok {
+			r.requests.Delete(id)
+			req := (request.(*requestInfo)).req.(*rpcRequest)
+			req.codec = rcodec
+			// serve the actual request using the request router
+			if err := r.router.ServeRequest(ctx, req); err != nil {
+				log.Error(err)
+				continue
+			}
+		} else {
+			log.Errorf("No find msg, msg id: %s", id)
 		}
 	}
+}
+
+func (r *rpcClient) OnTcpClose(nodeID string) {
+	r.requests.Range(func(id, request interface{}) bool {
+		if (request.(*requestInfo)).nodeID == nodeID {
+			r.requests.Delete(id)
+		}
+		return true
+	})
 }

@@ -3,6 +3,9 @@ package rpc
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"sync"
+	"sync/atomic"
 
 	"github.com/fananchong/v-micro/client"
 	common "github.com/fananchong/v-micro/client/internal"
@@ -16,8 +19,10 @@ import (
 )
 
 type rpcClient struct {
-	opts   client.Options
-	router *router
+	opts       client.Options
+	router     *router
+	requests   sync.Map
+	requestsID uint64
 }
 
 func newRPCClient(opts ...client.Option) client.Client {
@@ -65,6 +70,7 @@ func (r *rpcClient) call(ctx context.Context, node *registry.Node, req client.Re
 
 	// set the content type for the request
 	msg.Header[metadata.CONTENTTYPE] = req.ContentType()
+	msg.Header[metadata.MSGID] = req.ID()
 
 	var cf codec.NewCodec
 	if cf, err = r.newCodec(req.ContentType()); err != nil {
@@ -90,6 +96,7 @@ func (r *rpcClient) Init(opts ...client.Option) error {
 
 	connectorOpts := []connector.Option{
 		connector.OnConnected(r.AsyncRecv),
+		connector.OnClose(r.OnTcpClose),
 	}
 	return r.opts.Connector.Init(connectorOpts...)
 }
@@ -116,7 +123,8 @@ func (r *rpcClient) next(request client.Request, opts client.CallOptions) (selec
 }
 
 func (r *rpcClient) NewRequest(service, method string, req interface{}) client.Request {
-	return newRequest(service, method, req, r.opts.ContentType)
+	id := atomic.AddUint64(&r.requestsID, 1)
+	return newRequest(strconv.FormatUint(id, 10), service, method, req, r.opts.ContentType)
 }
 
 func (r *rpcClient) Call(ctx context.Context, request client.Request, opts ...client.CallOption) (err error) {
@@ -140,24 +148,26 @@ func (r *rpcClient) Call(ctx context.Context, request client.Request, opts ...cl
 		rcall = callOpts.CallWrappers[i-1](rcall)
 	}
 
-	call := func() (error, bool) {
+	call := func() (error, *registry.Node, bool) {
 		// select next node
 		node, err := next()
 		service := request.Service()
 		if err != nil {
-			return fmt.Errorf("service %s: %s", service, err.Error()), false
+			return fmt.Errorf("service %s: %s", service, err.Error()), node, false
 		}
 		// make the call
 		err = rcall(ctx, node, request, callOpts)
-		return err, true
+		return err, node, true
 	}
 
 	var canTry bool
+	var node *registry.Node
 	for {
-		if err, canTry = call(); err != nil && canTry {
+		if err, node, canTry = call(); err != nil && canTry {
 			log.Errorf("call fail and try again, err:%s", err.Error())
 			continue
 		} else {
+			r.requests.Store(request.ID(), &requestInfo{nodeID: node.ID, req: request})
 			break
 		}
 	}

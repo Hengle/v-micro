@@ -43,6 +43,7 @@ type Marshaler interface {
 // the communication, likely followed by the body.
 // In the case of an error, body may be nil.
 type Message struct {
+	ID     string
 	Method string // 方法名， class:method
 
 	// The values read from the socket
