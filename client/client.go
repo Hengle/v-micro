@@ -22,6 +22,8 @@ type Client interface {
 
 // Request is the interface for a synchronous request used by Call or Stream
 type Request interface {
+	// The request id
+	ID() string
 	// The service to call
 	Service() string
 	// The action to take

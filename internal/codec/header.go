@@ -15,6 +15,7 @@ func GetHeader(hdr string, md map[string]string) string {
 
 // GetHeaders get headers
 func GetHeaders(m *codec.Message) {
+	m.ID = GetHeader(metadata.MSGID, m.Header)
 	m.Method = GetHeader(metadata.METHOD, m.Header)
 }
 
@@ -28,6 +29,7 @@ func SetHeaders(m, r *codec.Message) {
 	}
 
 	// set headers
+	set(metadata.MSGID, r.ID)
 	set(metadata.METHOD, r.Method)
 
 	if v, ok := r.Header[metadata.CONTENTTYPE]; ok && v == "" {

@@ -1,7 +1,10 @@
 package metadata
 
+// MSGID msg id
+const MSGID = "_0"
+
 // METHOD Micro-Method
-const METHOD = "_0"
+const METHOD = "_1"
 
 // CONTENTTYPE Content-Type
-const CONTENTTYPE = "_1"
+const CONTENTTYPE = "_2"

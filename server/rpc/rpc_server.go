@@ -254,6 +254,7 @@ func (s *rpcServer) serveConn(sock transport.Socket) {
 
 		// internal request
 		request := &rpcRequest{
+			id:          hcodec.GetHeader(metadata.MSGID, msg.Header),
 			method:      hcodec.GetHeader(metadata.METHOD, msg.Header),
 			contentType: ct,
 			codec:       rcodec,

@@ -132,20 +132,13 @@ func (router *router) readRequest(r *rpcRequest) (service *service, mtype *metho
 	}
 
 	// Decode the argument value.
-	cc0 := r.Codec(0)
+	cc := r.Codec()
 	replyv = reflect.New(mtype.ReplyType.Elem())
-	if err = cc0.ReadBody(replyv.Interface()); err != nil {
+	if err = cc.ReadBody(replyv.Interface()); err != nil {
 		log.Error(err)
 		return
 	}
-
-	cc1 := r.Codec(1)
-	argv = reflect.New(mtype.ArgType.Elem())
-	if err = cc1.ReadBody(argv.Interface()); err != nil {
-		log.Error(err)
-		return
-	}
-
+	argv = reflect.ValueOf(r.Body())
 	return
 }
 
